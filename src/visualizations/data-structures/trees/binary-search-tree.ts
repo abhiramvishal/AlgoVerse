@@ -231,9 +231,9 @@ function generateBSTSteps(insertValues: number[]): AnimationStep[] {
     undefined,
   );
 
-  let current = rootId;
+  let current: number | null = rootId;
   while (current !== null) {
-    const curr = nodeMap.get(current)!;
+    const curr: BSTNode = nodeMap.get(current)!;
 
     push(
       `Search ${searchTarget}: comparing with ${curr.value}.`,
@@ -263,7 +263,7 @@ function generateBSTSteps(insertValues: number[]): AnimationStep[] {
         undefined,
         undefined,
       );
-      current = curr.left;
+      current = curr.left ?? null;
     } else {
       push(
         `${searchTarget} > ${curr.value}: search right subtree.`,
@@ -273,7 +273,7 @@ function generateBSTSteps(insertValues: number[]): AnimationStep[] {
         undefined,
         undefined,
       );
-      current = curr.right;
+      current = curr.right ?? null;
     }
   }
 
