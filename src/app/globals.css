@@ -1,14 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0f0f0f;
+  --background: #08070f;
   --foreground: #f4f4f5;
-  --panel: #171717;
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
-  --border: #303036;
-  --accent: #2563eb;
-  --radius: 0.75rem;
+  --panel: rgba(17, 16, 28, 0.6);
+  --muted: #1b1a2d;
+  --muted-foreground: #9a98b5;
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #6366f1;
+  --accent-glow: rgba(99, 102, 241, 0.4);
+  --radius: 1rem;
 }
 
 @theme inline {
@@ -27,30 +28,112 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
 }
 
 * {
   border-color: var(--border);
 }
 
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
   border-radius: 9999px;
-  background-color: #3f3f46;
+  background-color: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(99, 102, 241, 0.45);
 }
 
 ::-webkit-scrollbar-track {
-  background-color: #18181b;
+  background-color: rgba(8, 7, 15, 0.5);
 }
 
+/* Glassmorphism Panel styles */
+.glass-panel {
+  background: rgba(13, 11, 28, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(20, 18, 41, 0.65);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(99, 102, 241, 0.1);
+  transform: translateY(-2px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Monaco Line Highlights */
 .algoverse-line-highlight {
-  background: rgba(37, 99, 235, 0.24);
+  background: rgba(99, 102, 241, 0.18);
+  box-shadow: inset 4px 0 0 0 #6366f1;
 }
 
 .algoverse-line-highlight-gutter {
-  border-left: 2px solid #60a5fa;
+  border-left: 2px solid #818cf8;
 }
+
+/* Background floating glow animations */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-25px) scale(1.05);
+  }
+}
+
+@keyframes float-medium {
+  0%, 100% {
+    transform: translateY(0px) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-15px) scale(1.02) rotate(180deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.08);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 12s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float-medium 8s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 6s ease-in-out infinite;
+}
+
+/* Glossy details */
+.glow-text {
+  text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+}
+
+.glow-text-cyan {
+  text-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+}
+
+.glow-border-indigo {
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.25);
+}
+
