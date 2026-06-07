@@ -921,6 +921,501 @@ function FlowDiagramRenderer({ visualState }: { visualState: VisualState }) {
   );
 }
 
+/* ─── Search Renderer ────────────────────────────────────────────────────── */
+function SearchRenderer({ visualState }: { visualState: VisualState }) {
+  const array = (visualState.array as number[] | undefined) ?? [];
+  const target = visualState.target as number | undefined;
+  const active = (visualState.active as number[] | undefined) ?? [];
+  const searchLeft = typeof visualState.searchLeft === "number" ? visualState.searchLeft : null;
+  const searchRight = typeof visualState.searchRight === "number" ? visualState.searchRight : null;
+  const found = typeof visualState.found === "number" ? visualState.found : -1;
+
+  const maxValue = array.length ? Math.max(...array, 1) : 1;
+  const barScale = scaleLinear().domain([0, maxValue]).range([24, 240]);
+
+  return (
+    <div className="flex h-full flex-col gap-2 relative z-10 w-full">
+      {target !== undefined && (
+        <div className="text-xs font-mono text-amber-400 text-center font-semibold">
+          Target: {target}
+        </div>
+      )}
+      <div className="flex flex-1 items-end gap-2 relative">
+        {array.map((value, index) => {
+          const isFound = found === index;
+          const isActive = active.includes(index);
+          const inRange =
+            searchLeft !== null && searchRight !== null &&
+            index >= searchLeft && index <= searchRight;
+
+          const barClass = isFound
+            ? "from-emerald-600 to-emerald-400 border-emerald-400/30"
+            : isActive
+              ? "from-rose-600 to-rose-400 border-rose-400/30"
+              : inRange
+                ? "from-indigo-600 to-indigo-400 border-indigo-400/20"
+                : "from-zinc-700 to-zinc-600 border-zinc-600/20";
+
+          return (
+            <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-1 relative">
+              {searchLeft === index && (
+                <div className="absolute -left-0.5 bottom-0 top-0 w-0.5 bg-cyan-400 opacity-70" />
+              )}
+              {searchRight === index && (
+                <div className="absolute -right-0.5 bottom-0 top-0 w-0.5 bg-cyan-400 opacity-70" />
+              )}
+              <span className="text-[10px] font-semibold font-mono text-zinc-400">{value}</span>
+              <motion.div
+                layout
+                transition={{ type: "spring", damping: 18, stiffness: 220 }}
+                className={`w-full rounded-t-lg border bg-gradient-to-t shadow-lg ${barClass}`}
+                style={{ height: `${barScale(value)}px` }}
+              />
+              <span className="text-[9px] font-mono text-zinc-600">{index}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Array1D Renderer ───────────────────────────────────────────────────── */
+interface Array1DCell {
+  val: number | string;
+  state: "default" | "active" | "computed" | "highlighted" | "min";
+}
+
+function Array1DRenderer({ visualState }: { visualState: VisualState }) {
+  const cells = (visualState.cells as Array1DCell[] | undefined) ?? [];
+  const label = visualState.label as string | undefined;
+  const pointers = (visualState.pointer as { index: number; label: string }[] | undefined) ?? [];
+
+  const cellW = Math.min(60, Math.max(32, Math.floor(520 / Math.max(cells.length, 1))));
+
+  function cellColor(state: string) {
+    switch (state) {
+      case "active": return { bg: "#9f1239", border: "#fb7185" };
+      case "computed": return { bg: "#065f46", border: "#34d399" };
+      case "highlighted": return { bg: "#78350f", border: "#fbbf24" };
+      case "min": return { bg: "#1e1b4b", border: "#818cf8" };
+      default: return { bg: "#18181b", border: "#3f3f46" };
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-3 w-full">
+      {label && <div className="text-xs font-mono text-zinc-400 font-semibold">{label}</div>}
+      <div className="flex gap-1 flex-wrap justify-center">
+        {cells.map((cell, i) => {
+          const { bg, border } = cellColor(cell.state);
+          const ptr = pointers.find((p) => p.index === i);
+          return (
+            <div key={i} className="flex flex-col items-center gap-1">
+              {ptr && (
+                <div className="text-[9px] font-mono text-amber-400">{ptr.label}</div>
+              )}
+              {ptr && <div className="w-px h-2 bg-amber-400" />}
+              <motion.div
+                layout
+                transition={{ type: "spring", damping: 20, stiffness: 250 }}
+                className="flex items-center justify-center rounded font-mono font-bold text-white text-xs"
+                style={{
+                  width: cellW,
+                  height: 40,
+                  background: bg,
+                  border: `1.5px solid ${border}`,
+                }}
+              >
+                {String(cell.val)}
+              </motion.div>
+              <div className="text-[9px] font-mono text-zinc-600">{i}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Table2D Renderer ───────────────────────────────────────────────────── */
+function Table2DRenderer({ visualState }: { visualState: VisualState }) {
+  const matrix = (visualState.matrix as (number | string)[][] | undefined) ?? [];
+  const rowLabels = (visualState.rowLabels as string[] | undefined) ?? [];
+  const colLabels = (visualState.colLabels as string[] | undefined) ?? [];
+  const activeCell = visualState.activeCell as [number, number] | undefined;
+  const filledCells = (visualState.filledCells as [number, number][] | undefined) ?? [];
+  const title = visualState.title as string | undefined;
+
+  const filledSet = new Set(filledCells.map(([r, c]) => `${r},${c}`));
+  const rows = matrix.length;
+  const cols = matrix[0]?.length ?? 0;
+  const cellSize = Math.min(44, Math.floor(480 / Math.max(cols + 1, 1)));
+
+  return (
+    <div className="flex flex-col items-center gap-2 overflow-auto max-h-full max-w-full">
+      {title && <div className="text-xs font-mono text-zinc-400 font-semibold">{title}</div>}
+      <div className="overflow-auto">
+        <table className="border-collapse text-xs font-mono">
+          <thead>
+            <tr>
+              <td className="p-1" style={{ width: cellSize, height: cellSize }} />
+              {colLabels.map((cl, ci) => (
+                <td key={ci} className="text-center text-zinc-500 font-semibold p-1" style={{ width: cellSize, height: cellSize }}>
+                  {cl}
+                </td>
+              ))}
+              {colLabels.length === 0 && Array.from({ length: cols }).map((_, ci) => (
+                <td key={ci} className="text-center text-zinc-600 p-1" style={{ width: cellSize, height: cellSize }}>{ci}</td>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {matrix.map((row, ri) => (
+              <tr key={ri}>
+                <td className="text-center text-zinc-500 font-semibold p-1" style={{ width: cellSize, height: cellSize }}>
+                  {rowLabels[ri] ?? ri}
+                </td>
+                {row.map((val, ci) => {
+                  const isActive = activeCell && activeCell[0] === ri && activeCell[1] === ci;
+                  const isFilled = filledSet.has(`${ri},${ci}`);
+                  const bg = isActive ? "#9f1239" : isFilled ? "#064e3b" : "#18181b";
+                  const border = isActive ? "#fb7185" : isFilled ? "#34d399" : "#3f3f46";
+                  return (
+                    <td key={ci} style={{ width: cellSize, height: cellSize, padding: 2 }}>
+                      <motion.div
+                        layout
+                        transition={{ type: "spring", damping: 20, stiffness: 250 }}
+                        className="flex items-center justify-center rounded font-bold text-white"
+                        style={{ width: "100%", height: "100%", background: bg, border: `1.5px solid ${border}`, fontSize: Math.min(12, cellSize * 0.3) }}
+                      >
+                        {String(val)}
+                      </motion.div>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Gantt Renderer ─────────────────────────────────────────────────────── */
+function GanttRenderer({ visualState }: { visualState: VisualState }) {
+  const processes = (visualState.processes as { name: string; color: string }[] | undefined) ?? [];
+  const timeline = (visualState.timeline as { processName: string; start: number; end: number }[] | undefined) ?? [];
+  const currentTime = typeof visualState.currentTime === "number" ? visualState.currentTime : 0;
+  const maxTime = typeof visualState.maxTime === "number" ? visualState.maxTime : 1;
+
+  const colorMap = new Map(processes.map((p) => [p.name, p.color]));
+  const barH = 44;
+  const startX = 60;
+  const endX = 560;
+  const totalW = endX - startX;
+  const scale = totalW / Math.max(maxTime, 1);
+
+  const cursorX = startX + currentTime * scale;
+
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 600 200" className="w-full h-full">
+      <text x={16} y={20} fontSize={10} fill="#818cf8" fontFamily="monospace" fontWeight="700">CPU SCHEDULING TIMELINE</text>
+
+      {/* Timeline bar background */}
+      <rect x={startX} y={40} width={totalW} height={barH} rx={4} fill="#18181b" stroke="#3f3f46" strokeWidth={1} />
+
+      {timeline.map((seg, i) => {
+        const x = startX + seg.start * scale;
+        const w = (seg.end - seg.start) * scale;
+        const color = colorMap.get(seg.processName) ?? "#6366f1";
+        return (
+          <g key={i}>
+            <rect x={x} y={40} width={w} height={barH} rx={2} fill={color} opacity={0.85} />
+            <text x={x + w / 2} y={40 + barH / 2 + 5} textAnchor="middle" fontSize={11} fill="white" fontFamily="monospace" fontWeight="700">
+              {seg.processName}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* Time markers */}
+      {Array.from({ length: maxTime + 1 }, (_, t) => {
+        const x = startX + t * scale;
+        return (
+          <g key={t}>
+            <line x1={x} y1={84} x2={x} y2={94} stroke="#6b7280" strokeWidth={1} />
+            <text x={x} y={106} textAnchor="middle" fontSize={9} fill="#6b7280" fontFamily="monospace">{t}</text>
+          </g>
+        );
+      })}
+
+      {/* Current time cursor */}
+      <line x1={cursorX} y1={34} x2={cursorX} y2={100} stroke="#f59e0b" strokeWidth={2} />
+      <text x={cursorX} y={28} textAnchor="middle" fontSize={9} fill="#f59e0b" fontFamily="monospace">t={currentTime}</text>
+
+      {/* Legend */}
+      {processes.map((p, i) => (
+        <g key={p.name}>
+          <rect x={startX + i * 80} y={130} width={14} height={14} rx={3} fill={p.color} />
+          <text x={startX + i * 80 + 18} y={142} fontSize={10} fill="#d1d5db" fontFamily="monospace">{p.name}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/* ─── NQueens Renderer ───────────────────────────────────────────────────── */
+function NQueensRenderer({ visualState }: { visualState: VisualState }) {
+  const n = typeof visualState.n === "number" ? visualState.n : 4;
+  const queens = (visualState.queens as [number, number][] | undefined) ?? [];
+  const current = visualState.current as [number, number] | undefined;
+  const conflicted = (visualState.conflicted as [number, number][] | undefined) ?? [];
+
+  const queensSet = new Set(queens.map(([r, c]) => `${r},${c}`));
+  const conflictSet = new Set(conflicted.map(([r, c]) => `${r},${c}`));
+  const currentKey = current ? `${current[0]},${current[1]}` : null;
+
+  const cellSize = Math.min(52, Math.floor(320 / n));
+  const boardW = n * cellSize;
+  const offsetX = (600 - boardW) / 2;
+  const offsetY = (260 - boardW) / 2;
+
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 600 280" className="w-full h-full">
+      <text x={300} y={18} textAnchor="middle" fontSize={11} fill="#818cf8" fontFamily="monospace" fontWeight="700">
+        {n}-QUEENS BOARD
+      </text>
+      {Array.from({ length: n }, (_, r) =>
+        Array.from({ length: n }, (_, c) => {
+          const key = `${r},${c}`;
+          const isLight = (r + c) % 2 === 0;
+          const hasQueen = queensSet.has(key);
+          const isConflict = conflictSet.has(key);
+          const isCurrent = key === currentKey;
+
+          let fill = isLight ? "#3f3f46" : "#27272a";
+          if (isConflict) fill = "#450a0a";
+          if (isCurrent) fill = "#78350f";
+
+          return (
+            <g key={key}>
+              <rect
+                x={offsetX + c * cellSize}
+                y={offsetY + r * cellSize}
+                width={cellSize}
+                height={cellSize}
+                fill={fill}
+                stroke={isCurrent ? "#f59e0b" : isConflict ? "#ef4444" : "#18181b"}
+                strokeWidth={isCurrent || isConflict ? 2 : 0.5}
+              />
+              {hasQueen && (
+                <text
+                  x={offsetX + c * cellSize + cellSize / 2}
+                  y={offsetY + r * cellSize + cellSize / 2 + 6}
+                  textAnchor="middle"
+                  fontSize={cellSize * 0.6}
+                  fill={isConflict ? "#ef4444" : "#f59e0b"}
+                >
+                  ♛
+                </text>
+              )}
+            </g>
+          );
+        })
+      )}
+    </svg>
+  );
+}
+
+/* ─── Sieve Renderer ─────────────────────────────────────────────────────── */
+interface SieveNumber {
+  val: number;
+  state: "prime" | "composite" | "current" | "unmarked";
+}
+
+function SieveRenderer({ visualState }: { visualState: VisualState }) {
+  const numbers = (visualState.numbers as SieveNumber[] | undefined) ?? [];
+
+  function cellStyle(state: string) {
+    switch (state) {
+      case "prime": return { bg: "#065f46", border: "#34d399", text: "#a7f3d0" };
+      case "composite": return { bg: "#27272a", border: "#3f3f46", text: "#52525b" };
+      case "current": return { bg: "#78350f", border: "#fbbf24", text: "#fef3c7" };
+      default: return { bg: "#18181b", border: "#3f3f46", text: "#d1d5db" };
+    }
+  }
+
+  const cols = 10;
+  const cellSize = 44;
+
+  return (
+    <div className="flex flex-col items-center gap-1 overflow-auto max-h-full">
+      <div className="text-xs font-mono text-zinc-400 mb-1">Sieve of Eratosthenes</div>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`, gap: 3 }}>
+        {numbers.map((num) => {
+          const { bg, border, text } = cellStyle(num.state);
+          return (
+            <motion.div
+              key={num.val}
+              layout
+              transition={{ type: "spring", damping: 20, stiffness: 250 }}
+              className="flex items-center justify-center rounded font-mono font-bold text-xs"
+              style={{
+                width: cellSize,
+                height: cellSize,
+                background: bg,
+                border: `1.5px solid ${border}`,
+                color: text,
+                textDecoration: num.state === "composite" ? "line-through" : "none",
+              }}
+            >
+              {num.val}
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Heap Renderer ──────────────────────────────────────────────────────── */
+function HeapRenderer({ visualState }: { visualState: VisualState }) {
+  const heap = (visualState.heap as number[] | undefined) ?? [];
+  const activeIndices = (visualState.activeIndices as number[] | undefined) ?? [];
+  const swapIndices = visualState.swapIndices as [number, number] | undefined;
+  const mode = (visualState.mode as string) ?? "max";
+
+  const n = heap.length;
+  if (n === 0) return (
+    <div className="m-auto text-xs text-zinc-500 font-mono">Empty heap</div>
+  );
+
+  // Compute positions for a binary tree layout
+  const levels = Math.floor(Math.log2(n)) + 1;
+  const svgW = 600;
+  const svgH = 300;
+  const levelH = svgH / (levels + 1);
+
+  function pos(i: number): { x: number; y: number } {
+    const level = Math.floor(Math.log2(i + 1));
+    const levelNodes = Math.pow(2, level);
+    const posInLevel = i - (levelNodes - 1);
+    const x = (svgW / (levelNodes + 1)) * (posInLevel + 1);
+    const y = (level + 1) * levelH;
+    return { x, y };
+  }
+
+  const swapSet = new Set(swapIndices ?? []);
+
+  return (
+    <svg width="100%" height="100%" viewBox={`0 0 ${svgW} ${svgH}`} className="w-full h-full">
+      <text x={300} y={18} textAnchor="middle" fontSize={10} fill="#818cf8" fontFamily="monospace" fontWeight="700">
+        {mode.toUpperCase()}-HEAP (array index based)
+      </text>
+
+      {heap.map((_, i) => {
+        const { x, y } = pos(i);
+        const leftIdx = 2 * i + 1;
+        const rightIdx = 2 * i + 2;
+        return (
+          <g key={`edges-${i}`}>
+            {leftIdx < n && (() => {
+              const { x: lx, y: ly } = pos(leftIdx);
+              return <line x1={x} y1={y} x2={lx} y2={ly} stroke="#4c4880" strokeWidth={1.5} />;
+            })()}
+            {rightIdx < n && (() => {
+              const { x: rx, y: ry } = pos(rightIdx);
+              return <line x1={x} y1={y} x2={rx} y2={ry} stroke="#4c4880" strokeWidth={1.5} />;
+            })()}
+          </g>
+        );
+      })}
+
+      {heap.map((val, i) => {
+        const { x, y } = pos(i);
+        const isActive = activeIndices.includes(i);
+        const isSwap = swapSet.has(i);
+        const fill = isSwap ? "#9f1239" : isActive ? "#1e1b4b" : "#1e1b4b";
+        const stroke = isSwap ? "#fb7185" : isActive ? "#818cf8" : "#4c4880";
+
+        return (
+          <g key={i}>
+            <circle cx={x} cy={y} r={20} fill={fill} stroke={stroke} strokeWidth={2} />
+            <text x={x} y={y + 5} textAnchor="middle" fontSize={12} fontWeight="bold" fill="white" fontFamily="monospace">
+              {val}
+            </text>
+            <text x={x} y={y + 32} textAnchor="middle" fontSize={9} fill="#6b7280" fontFamily="monospace">
+              [{i}]
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ─── Matrix Renderer ────────────────────────────────────────────────────── */
+function MatrixRenderer({ visualState }: { visualState: VisualState }) {
+  const matrix = (visualState.matrix as (number | string)[][] | undefined) ?? [];
+  const rowLabels = (visualState.rowLabels as string[] | undefined) ?? [];
+  const colLabels = (visualState.colLabels as string[] | undefined) ?? [];
+  const highlighted = (visualState.highlighted as [number, number][] | undefined) ?? [];
+  const active = visualState.active as [number, number] | undefined;
+  const title = visualState.title as string | undefined;
+
+  const highlightSet = new Set(highlighted.map(([r, c]) => `${r},${c}`));
+  const cols = matrix[0]?.length ?? 0;
+  const cellSize = Math.min(44, Math.floor(480 / Math.max(cols + 1, 1)));
+
+  return (
+    <div className="flex flex-col items-center gap-2 overflow-auto max-h-full max-w-full">
+      {title && <div className="text-xs font-mono text-zinc-400 font-semibold">{title}</div>}
+      <div className="overflow-auto">
+        <table className="border-collapse text-xs font-mono">
+          <thead>
+            <tr>
+              <td style={{ width: cellSize, height: cellSize }} />
+              {colLabels.map((cl, ci) => (
+                <td key={ci} className="text-center text-zinc-500 font-semibold p-1" style={{ width: cellSize }}>{cl}</td>
+              ))}
+              {colLabels.length === 0 && Array.from({ length: cols }).map((_, ci) => (
+                <td key={ci} className="text-center text-zinc-600 p-1" style={{ width: cellSize }}>{ci}</td>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {matrix.map((row, ri) => (
+              <tr key={ri}>
+                <td className="text-center text-zinc-500 font-semibold p-1" style={{ width: cellSize, height: cellSize }}>
+                  {rowLabels[ri] ?? ri}
+                </td>
+                {row.map((val, ci) => {
+                  const isActive = active && active[0] === ri && active[1] === ci;
+                  const isHighlighted = highlightSet.has(`${ri},${ci}`);
+                  const bg = isActive ? "#9f1239" : isHighlighted ? "#78350f" : "#18181b";
+                  const border = isActive ? "#fb7185" : isHighlighted ? "#fbbf24" : "#3f3f46";
+                  return (
+                    <td key={ci} style={{ padding: 2 }}>
+                      <div
+                        className="flex items-center justify-center rounded font-bold text-white"
+                        style={{ width: cellSize, height: cellSize, background: bg, border: `1.5px solid ${border}`, fontSize: Math.min(12, cellSize * 0.3) }}
+                      >
+                        {String(val)}
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Placeholder Renderer ────────────────────────────────────────────────── */
 function PlaceholderRenderer() {
   return (
@@ -954,6 +1449,22 @@ export function VisualizationCanvas({ visualState }: VisualizationCanvasProps) {
     renderer = <HashTableRenderer visualState={visualState} />;
   } else if (type === "flowdiagram") {
     renderer = <FlowDiagramRenderer visualState={visualState} />;
+  } else if (type === "search") {
+    renderer = <SearchRenderer visualState={visualState} />;
+  } else if (type === "array1d") {
+    renderer = <Array1DRenderer visualState={visualState} />;
+  } else if (type === "table2d") {
+    renderer = <Table2DRenderer visualState={visualState} />;
+  } else if (type === "gantt") {
+    renderer = <GanttRenderer visualState={visualState} />;
+  } else if (type === "nqueens") {
+    renderer = <NQueensRenderer visualState={visualState} />;
+  } else if (type === "sieve") {
+    renderer = <SieveRenderer visualState={visualState} />;
+  } else if (type === "heap") {
+    renderer = <HeapRenderer visualState={visualState} />;
+  } else if (type === "matrix") {
+    renderer = <MatrixRenderer visualState={visualState} />;
   } else {
     // Default: sorting bar chart (handles array-based states without a type)
     renderer = <SortingRenderer visualState={visualState} />;

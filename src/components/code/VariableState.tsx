@@ -8,11 +8,11 @@ export function VariableState({ variables }: VariableStateProps) {
   const entries = Object.entries(variables);
 
   return (
-    <Card className="h-full min-h-28 border-zinc-700 bg-zinc-900/80">
+    <Card className="shrink-0 border-zinc-700 bg-zinc-900/80">
       <CardHeader className="pb-2">
         <CardTitle>Variables</CardTitle>
       </CardHeader>
-      <CardContent className="max-h-40 space-y-2 overflow-auto text-sm">
+      <CardContent className="max-h-48 space-y-2 overflow-auto text-sm">
         {!entries.length && (
           <p className="text-xs text-zinc-400">No tracked variables for this step.</p>
         )}
