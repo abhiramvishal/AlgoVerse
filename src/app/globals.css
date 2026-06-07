@@ -137,3 +137,22 @@ body {
   box-shadow: 0 0 15px rgba(99, 102, 241, 0.25);
 }
 
+/* Shimmer sweep animation for bar highlights */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.4s ease-in-out infinite;
+}
+
+/* Auth modal backdrop utility */
+.bg-white\/4 {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.border-white\/8 {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
