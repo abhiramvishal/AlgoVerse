@@ -99,6 +99,8 @@ function GraphRenderer({ visualState }: { visualState: VisualState }) {
   const path = new Set<string | number>(
     (visualState.path as (string | number)[]) ?? [],
   );
+  const mstEdges = (visualState.mstEdges as [string | number, string | number][] | undefined) ?? [];
+  const mstSet = new Set(mstEdges.map(([a, b]) => `${a}__${b}`));
 
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
@@ -157,6 +159,9 @@ function GraphRenderer({ visualState }: { visualState: VisualState }) {
           edge.to === relaxed ||
           (visited.has(edge.from) && frontier.has(edge.to));
         const isOnPath = path.has(edge.from) && path.has(edge.to);
+        const isMst =
+          mstSet.has(`${edge.from}__${edge.to}`) ||
+          mstSet.has(`${edge.to}__${edge.from}`);
 
         // Offset endpoints slightly from node center
         const dx = toNode.x - fromNode.x;
@@ -175,8 +180,8 @@ function GraphRenderer({ visualState }: { visualState: VisualState }) {
           <g key={i}>
             <line
               x1={x1} y1={y1} x2={x2} y2={y2}
-              stroke={isOnPath ? "#10b981" : isActive ? "#818cf8" : "#4c4880"}
-              strokeWidth={isOnPath ? 2.5 : isActive ? 2 : 1.5}
+              stroke={isMst ? "#10b981" : isOnPath ? "#10b981" : isActive ? "#818cf8" : "#4c4880"}
+              strokeWidth={isMst ? 3 : isOnPath ? 2.5 : isActive ? 2 : 1.5}
               strokeOpacity={0.9}
               markerEnd={
                 edge.directed !== false
@@ -1416,6 +1421,596 @@ function MatrixRenderer({ visualState }: { visualState: VisualState }) {
   );
 }
 
+/* ─── Bit Renderer ───────────────────────────────────────────────────────── */
+function BitRenderer({ visualState }: { visualState: VisualState }) {
+  const number = typeof visualState.number === "number" ? visualState.number : 0;
+  const bits = (visualState.bits as string) ?? "00000000";
+  const activeBits = new Set<number>((visualState.activeBits as number[] | undefined) ?? []);
+  const label = visualState.label as string | undefined;
+  const result = visualState.result as { bits: string; number: number } | undefined;
+  const operandB = visualState.operandB as { bits: string; number: number } | undefined;
+
+  const cellSize = 28;
+  const gap = 2;
+  const len = bits.length;
+  const rowW = len * (cellSize + gap);
+
+  function BitRow({ rowBits, rowNum, rowLabel }: { rowBits: string; rowNum: number; rowLabel: string }) {
+    return (
+      <g>
+        <text x={-8} y={cellSize / 2 + 5} textAnchor="end" fontSize={10} fill="#9ca3af" fontFamily="monospace">{rowLabel}</text>
+        {rowBits.split("").map((bit, i) => {
+          const bitIndex = rowBits.length - 1 - i;
+          const isActive = activeBits.has(bitIndex);
+          const fill = isActive ? "#d97706" : bit === "1" ? "#6366f1" : "#3f3f46";
+          const stroke = isActive ? "#fbbf24" : bit === "1" ? "#818cf8" : "#52525b";
+          return (
+            <g key={i}>
+              <rect x={i * (cellSize + gap)} y={0} width={cellSize} height={cellSize} rx={4} fill={fill} stroke={stroke} strokeWidth={1.5} />
+              <text x={i * (cellSize + gap) + cellSize / 2} y={cellSize / 2 + 5} textAnchor="middle" fontSize={12} fontWeight="bold" fill="white" fontFamily="monospace">{bit}</text>
+            </g>
+          );
+        })}
+        <text x={rowW + 8} y={cellSize / 2 + 5} fontSize={10} fill="#9ca3af" fontFamily="monospace">= {rowNum}</text>
+      </g>
+    );
+  }
+
+  const rowCount = 1 + (operandB ? 1 : 0) + (result ? 1 : 0);
+  const svgH = 60 + rowCount * (cellSize + 12) + 24;
+
+  return (
+    <svg width="100%" height="100%" viewBox={`0 0 ${rowW + 160} ${svgH}`} className="w-full h-full">
+      {label && (
+        <text x={(rowW + 160) / 2} y={20} textAnchor="middle" fontSize={11} fill="#f59e0b" fontFamily="monospace" fontWeight="700">{label}</text>
+      )}
+      <g transform="translate(80, 36)">
+        <BitRow rowBits={bits} rowNum={number} rowLabel="A" />
+        {operandB && (
+          <g transform={`translate(0, ${cellSize + 12})`}>
+            <BitRow rowBits={operandB.bits} rowNum={operandB.number} rowLabel="B" />
+          </g>
+        )}
+        {result && (
+          <g transform={`translate(0, ${(operandB ? 2 : 1) * (cellSize + 12)})`}>
+            <line x1={0} y1={-4} x2={rowW} y2={-4} stroke="#4b5563" strokeWidth={1} />
+            <BitRow rowBits={result.bits} rowNum={result.number} rowLabel="=" />
+          </g>
+        )}
+        {/* Index labels */}
+        {bits.split("").map((_, i) => {
+          const bitIndex = bits.length - 1 - i;
+          return (
+            <text key={i} x={i * (cellSize + gap) + cellSize / 2} y={rowCount * (cellSize + 12) + 16} textAnchor="middle" fontSize={8} fill="#6b7280" fontFamily="monospace">{bitIndex}</text>
+          );
+        })}
+      </g>
+    </svg>
+  );
+}
+
+/* ─── Geometry Renderer ──────────────────────────────────────────────────── */
+interface GeoPoint { x: number; y: number; id?: string; state?: "default" | "active" | "hull" | "current" | "inside" | "outside" }
+interface GeoLine { x1: number; y1: number; x2: number; y2: number; color?: string }
+
+function GeometryRenderer({ visualState }: { visualState: VisualState }) {
+  const points = (visualState.points as GeoPoint[]) ?? [];
+  const lines = (visualState.lines as GeoLine[] | undefined) ?? [];
+  const polygon = (visualState.polygon as { x: number; y: number }[] | undefined);
+  const hullPoints = (visualState.hullPoints as { x: number; y: number }[] | undefined);
+  const label = visualState.label as string | undefined;
+
+  const svgW = 500;
+  const svgH = 340;
+  const pad = 40;
+
+  const allX = points.map((p) => p.x);
+  const allY = points.map((p) => p.y);
+  const minX = allX.length ? Math.min(...allX) : 0;
+  const maxX = allX.length ? Math.max(...allX) : 10;
+  const minY = allY.length ? Math.min(...allY) : 0;
+  const maxY = allY.length ? Math.max(...allY) : 10;
+
+  const scaleX = scaleLinear().domain([minX - 1, maxX + 1]).range([pad, svgW - pad]);
+  const scaleY = scaleLinear().domain([minY - 1, maxY + 1]).range([svgH - pad, pad]);
+
+  function ptColor(state?: string) {
+    switch (state) {
+      case "hull": return "#10b981";
+      case "active": return "#f59e0b";
+      case "current": return "#f43f5e";
+      case "inside": return "#6366f1";
+      case "outside": return "#71717a";
+      default: return "#6366f1";
+    }
+  }
+
+  function polyPath(pts: { x: number; y: number }[]) {
+    return pts.map((p, i) => `${i === 0 ? "M" : "L"} ${scaleX(p.x)},${scaleY(p.y)}`).join(" ") + " Z";
+  }
+
+  return (
+    <svg width="100%" height="100%" viewBox={`0 0 ${svgW} ${svgH}`} className="w-full h-full">
+      {/* Axes */}
+      <line x1={pad} y1={svgH - pad} x2={svgW - pad} y2={svgH - pad} stroke="#374151" strokeWidth={1} />
+      <line x1={pad} y1={pad} x2={pad} y2={svgH - pad} stroke="#374151" strokeWidth={1} />
+
+      {label && (
+        <text x={svgW / 2} y={16} textAnchor="middle" fontSize={11} fill="#f59e0b" fontFamily="monospace" fontWeight="700">{label}</text>
+      )}
+
+      {/* Polygon */}
+      {polygon && polygon.length > 1 && (
+        <path d={polyPath(polygon)} fill="#6366f120" stroke="#6366f1" strokeWidth={1.5} strokeDasharray="4,3" />
+      )}
+
+      {/* Hull */}
+      {hullPoints && hullPoints.length > 1 && (
+        <path d={polyPath(hullPoints)} fill="#10b98115" stroke="#10b981" strokeWidth={2} />
+      )}
+
+      {/* Lines */}
+      {lines.map((l, i) => (
+        <line key={i} x1={scaleX(l.x1)} y1={scaleY(l.y1)} x2={scaleX(l.x2)} y2={scaleY(l.y2)} stroke={l.color ?? "#818cf8"} strokeWidth={1.5} />
+      ))}
+
+      {/* Points */}
+      {points.map((p, i) => (
+        <g key={i}>
+          <circle cx={scaleX(p.x)} cy={scaleY(p.y)} r={6} fill={ptColor(p.state)} stroke="white" strokeWidth={1} />
+          {p.id && (
+            <text x={scaleX(p.x) + 9} y={scaleY(p.y) - 5} fontSize={9} fill="#9ca3af" fontFamily="monospace">{p.id}</text>
+          )}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/* ─── Text Match Renderer ────────────────────────────────────────────────── */
+function TextMatchRenderer({ visualState }: { visualState: VisualState }) {
+  const text = (visualState.text as string) ?? "";
+  const pattern = (visualState.pattern as string) ?? "";
+  const textHighlight = new Set<number>((visualState.textHighlight as number[] | undefined) ?? []);
+  const patternHighlight = new Set<number>((visualState.patternHighlight as number[] | undefined) ?? []);
+  const matchIndices = new Set<number>((visualState.matchIndices as number[] | undefined) ?? []);
+  const mismatchIndex = visualState.mismatchIndex as number | undefined;
+  const offset = typeof visualState.offset === "number" ? visualState.offset : 0;
+  const label = visualState.label as string | undefined;
+
+  const cellW = 28;
+  const cellH = 32;
+  const gap = 2;
+
+  function textCellColor(i: number) {
+    if (i === mismatchIndex) return { fill: "#9f1239", stroke: "#fb7185" };
+    if (matchIndices.has(i)) return { fill: "#065f46", stroke: "#34d399" };
+    if (textHighlight.has(i)) return { fill: "#78350f", stroke: "#fbbf24" };
+    return { fill: "#18181b", stroke: "#3f3f46" };
+  }
+
+  function patCellColor(i: number) {
+    const ti = i + offset;
+    if (ti === mismatchIndex) return { fill: "#9f1239", stroke: "#fb7185" };
+    if (patternHighlight.has(i)) return { fill: "#312e81", stroke: "#818cf8" };
+    return { fill: "#18181b", stroke: "#3f3f46" };
+  }
+
+  const totalW = Math.max(text.length, pattern.length + offset) * (cellW + gap) + 80;
+
+  return (
+    <svg width="100%" height="100%" viewBox={`0 0 ${totalW} 160`} className="w-full h-full">
+      {label && (
+        <text x={totalW / 2} y={16} textAnchor="middle" fontSize={11} fill="#f59e0b" fontFamily="monospace" fontWeight="700">{label}</text>
+      )}
+
+      {/* Text row */}
+      <text x={4} y={45} fontSize={9} fill="#9ca3af" fontFamily="monospace">text</text>
+      {text.split("").map((ch, i) => {
+        const { fill, stroke } = textCellColor(i);
+        const x = 44 + i * (cellW + gap);
+        return (
+          <g key={i}>
+            <rect x={x} y={26} width={cellW} height={cellH} rx={4} fill={fill} stroke={stroke} strokeWidth={1.5} />
+            <text x={x + cellW / 2} y={26 + cellH / 2 + 5} textAnchor="middle" fontSize={12} fontWeight="bold" fill="white" fontFamily="monospace">{ch}</text>
+            <text x={x + cellW / 2} y={26 + cellH + 12} textAnchor="middle" fontSize={8} fill="#6b7280" fontFamily="monospace">{i}</text>
+          </g>
+        );
+      })}
+
+      {/* Pattern row */}
+      <text x={4} y={105} fontSize={9} fill="#9ca3af" fontFamily="monospace">pat</text>
+      {pattern.split("").map((ch, i) => {
+        const { fill, stroke } = patCellColor(i);
+        const x = 44 + (i + offset) * (cellW + gap);
+        return (
+          <g key={i}>
+            <rect x={x} y={86} width={cellW} height={cellH} rx={4} fill={fill} stroke={stroke} strokeWidth={1.5} />
+            <text x={x + cellW / 2} y={86 + cellH / 2 + 5} textAnchor="middle" fontSize={12} fontWeight="bold" fill="white" fontFamily="monospace">{ch}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ─── Scatter Plot Renderer ──────────────────────────────────────────────── */
+interface ScatterPoint { x: number; y: number; label?: number | string; cluster?: number }
+interface Centroid { x: number; y: number; id: number }
+
+function ScatterRenderer({ visualState }: { visualState: VisualState }) {
+  const points = (visualState.points as ScatterPoint[]) ?? [];
+  const centroids = (visualState.centroids as Centroid[] | undefined) ?? [];
+  const clusterColors = (visualState.clusterColors as string[] | undefined) ?? ["#6366f1", "#10b981", "#f59e0b", "#f43f5e", "#06b6d4", "#ec4899"];
+  const decisionBoundary = visualState.decisionBoundary as { x1: number; y1: number; x2: number; y2: number } | undefined;
+  const title = visualState.title as string | undefined;
+
+  const svgW = 500;
+  const svgH = 340;
+  const pad = 40;
+
+  const allX = [...points.map((p) => p.x), ...centroids.map((c) => c.x)];
+  const allY = [...points.map((p) => p.y), ...centroids.map((c) => c.y)];
+  const minX = allX.length ? Math.min(...allX) : 0;
+  const maxX = allX.length ? Math.max(...allX) : 10;
+  const minY = allY.length ? Math.min(...allY) : 0;
+  const maxY = allY.length ? Math.max(...allY) : 10;
+
+  const sx = scaleLinear().domain([minX - 1, maxX + 1]).range([pad, svgW - pad]);
+  const sy = scaleLinear().domain([minY - 1, maxY + 1]).range([svgH - pad, pad]);
+
+  return (
+    <svg width="100%" height="100%" viewBox={`0 0 ${svgW} ${svgH}`} className="w-full h-full">
+      {title && <text x={svgW / 2} y={16} textAnchor="middle" fontSize={11} fill="#f59e0b" fontFamily="monospace" fontWeight="700">{title}</text>}
+
+      {/* Axes */}
+      <line x1={pad} y1={svgH - pad} x2={svgW - pad} y2={svgH - pad} stroke="#374151" strokeWidth={1} />
+      <line x1={pad} y1={pad} x2={pad} y2={svgH - pad} stroke="#374151" strokeWidth={1} />
+
+      {/* Decision boundary */}
+      {decisionBoundary && (
+        <line x1={sx(decisionBoundary.x1)} y1={sy(decisionBoundary.y1)} x2={sx(decisionBoundary.x2)} y2={sy(decisionBoundary.y2)} stroke="#818cf8" strokeWidth={1.5} strokeDasharray="6,3" />
+      )}
+
+      {/* Points */}
+      {points.map((p, i) => {
+        const color = p.cluster !== undefined ? (clusterColors[p.cluster % clusterColors.length] ?? "#6366f1") : "#6366f1";
+        return (
+          <g key={i}>
+            <circle cx={sx(p.x)} cy={sy(p.y)} r={5} fill={color} fillOpacity={0.75} stroke={color} strokeWidth={1} />
+            {p.label !== undefined && (
+              <text x={sx(p.x) + 7} y={sy(p.y) + 4} fontSize={8} fill="#9ca3af" fontFamily="monospace">{p.label}</text>
+            )}
+          </g>
+        );
+      })}
+
+      {/* Centroids as ✕ */}
+      {centroids.map((c) => {
+        const color = clusterColors[c.id % clusterColors.length] ?? "#f59e0b";
+        const cx = sx(c.x);
+        const cy = sy(c.y);
+        const r = 7;
+        return (
+          <g key={c.id}>
+            <line x1={cx - r} y1={cy - r} x2={cx + r} y2={cy + r} stroke={color} strokeWidth={2.5} />
+            <line x1={cx + r} y1={cy - r} x2={cx - r} y2={cy + r} stroke={color} strokeWidth={2.5} />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ─── Neural Network Renderer ────────────────────────────────────────────── */
+interface NNLayer { size: number; label?: string }
+
+function NeuralNetRenderer({ visualState }: { visualState: VisualState }) {
+  const layers = (visualState.layers as NNLayer[]) ?? [];
+  const activations = (visualState.activations as number[][] | undefined) ?? [];
+  const weights = (visualState.weights as number[][][] | undefined) ?? [];
+  const activeLayer = typeof visualState.activeLayer === "number" ? visualState.activeLayer : -1;
+  const highlightedEdges = (visualState.highlightedEdges as [number, number, number][] | undefined) ?? [];
+  const title = visualState.title as string | undefined;
+
+  const svgW = 600;
+  const svgH = 320;
+  const padX = 60;
+  const padY = 40;
+
+  const maxNodes = Math.max(...layers.map((l) => l.size), 1);
+  const layerX = layers.map((_, li) =>
+    padX + li * ((svgW - 2 * padX) / Math.max(layers.length - 1, 1))
+  );
+
+  function nodeY(li: number, ni: number) {
+    const n = layers[li].size;
+    const usableH = svgH - 2 * padY;
+    const spacing = usableH / Math.max(n - 1, 1);
+    const startY = padY + (maxNodes - n) * spacing / 2;
+    return n === 1 ? svgH / 2 : startY + ni * spacing;
+  }
+
+  const hlEdgeSet = new Set(highlightedEdges.map(([l, f, t]) => `${l},${f},${t}`));
+
+  return (
+    <svg width="100%" height="100%" viewBox={`0 0 ${svgW} ${svgH}`} className="w-full h-full">
+      {title && <text x={svgW / 2} y={14} textAnchor="middle" fontSize={11} fill="#f59e0b" fontFamily="monospace" fontWeight="700">{title}</text>}
+
+      {/* Edges */}
+      {layers.slice(0, -1).map((layer, li) =>
+        Array.from({ length: layer.size }, (_, fi) =>
+          Array.from({ length: layers[li + 1].size }, (_, ti) => {
+            const isHl = hlEdgeSet.has(`${li},${fi},${ti}`);
+            const w = weights[li]?.[fi]?.[ti];
+            const opacity = w !== undefined ? Math.min(1, Math.abs(w) + 0.15) : 0.3;
+            return (
+              <line key={`${li}-${fi}-${ti}`}
+                x1={layerX[li]} y1={nodeY(li, fi)}
+                x2={layerX[li + 1]} y2={nodeY(li + 1, ti)}
+                stroke={isHl ? "#f59e0b" : "#4c4880"}
+                strokeWidth={isHl ? 2 : 1}
+                strokeOpacity={isHl ? 1 : opacity}
+              />
+            );
+          })
+        )
+      )}
+
+      {/* Nodes */}
+      {layers.map((layer, li) =>
+        Array.from({ length: layer.size }, (_, ni) => {
+          const act = activations[li]?.[ni] ?? 0;
+          const isActiveLyr = li === activeLayer;
+          const fill = isActiveLyr ? `rgba(245,158,11,${0.2 + act * 0.7})` : `rgba(99,102,241,${0.15 + act * 0.7})`;
+          const stroke = isActiveLyr ? "#f59e0b" : "#818cf8";
+          return (
+            <g key={`${li}-${ni}`}>
+              <circle cx={layerX[li]} cy={nodeY(li, ni)} r={14} fill={fill} stroke={stroke} strokeWidth={1.5} />
+              <text x={layerX[li]} y={nodeY(li, ni) + 4} textAnchor="middle" fontSize={9} fill="white" fontFamily="monospace">
+                {act > 0 ? act.toFixed(1) : ""}
+              </text>
+            </g>
+          );
+        })
+      )}
+
+      {/* Layer labels */}
+      {layers.map((layer, li) => (
+        <text key={li} x={layerX[li]} y={svgH - 6} textAnchor="middle" fontSize={9} fill="#6b7280" fontFamily="monospace">
+          {layer.label ?? (li === 0 ? "in" : li === layers.length - 1 ? "out" : `h${li}`)}
+        </text>
+      ))}
+    </svg>
+  );
+}
+
+/* ─── Blockchain Renderer ────────────────────────────────────────────────── */
+interface BlockData { index: number; hash: string; prevHash: string; data: string; nonce?: number; valid: boolean }
+
+function BlockchainRenderer({ visualState }: { visualState: VisualState }) {
+  const blocks = (visualState.blocks as BlockData[]) ?? [];
+  const currentBlock = visualState.currentBlock as number | undefined;
+  const miningBlock = visualState.miningBlock as number | undefined;
+
+  const blockW = 110;
+  const blockH = 90;
+  const gap = 36;
+  const startX = 20;
+  const y = 80;
+  const totalW = Math.max(600, blocks.length * (blockW + gap) + startX + 20);
+
+  return (
+    <svg width="100%" height="100%" viewBox={`0 0 ${totalW} 220`} className="w-full h-full">
+      <text x={totalW / 2} y={20} textAnchor="middle" fontSize={11} fill="#818cf8" fontFamily="monospace" fontWeight="700">BLOCKCHAIN</text>
+
+      {blocks.map((block, i) => {
+        const x = startX + i * (blockW + gap);
+        const isCurrent = block.index === currentBlock;
+        const isMining = block.index === miningBlock;
+        const stroke = isMining ? "#f59e0b" : block.valid ? "#10b981" : "#f43f5e";
+        const fill = isMining ? "#78350f30" : block.valid ? "#065f4630" : "#9f123930";
+
+        return (
+          <g key={block.index}>
+            {/* Arrow from prev */}
+            {i > 0 && (
+              <line
+                x1={x - gap + 4} y1={y + blockH / 2}
+                x2={x - 4} y2={y + blockH / 2}
+                stroke="#4c4880" strokeWidth={1.5}
+                markerEnd="url(#bc-arrow)"
+              />
+            )}
+            <rect x={x} y={y} width={blockW} height={blockH} rx={6} fill={fill} stroke={stroke} strokeWidth={isMining || isCurrent ? 2.5 : 1.5} />
+            <text x={x + blockW / 2} y={y + 16} textAnchor="middle" fontSize={9} fill={stroke} fontFamily="monospace" fontWeight="700">Block #{block.index}</text>
+            <text x={x + blockW / 2} y={y + 32} textAnchor="middle" fontSize={7} fill="#9ca3af" fontFamily="monospace">h: {block.hash.slice(0, 8)}…</text>
+            <text x={x + blockW / 2} y={y + 46} textAnchor="middle" fontSize={7} fill="#6b7280" fontFamily="monospace">p: {block.prevHash.slice(0, 8)}…</text>
+            <text x={x + blockW / 2} y={y + 62} textAnchor="middle" fontSize={8} fill="#d1d5db" fontFamily="monospace">{String(block.data).slice(0, 12)}</text>
+            {block.nonce !== undefined && (
+              <text x={x + blockW / 2} y={y + 76} textAnchor="middle" fontSize={7} fill="#818cf8" fontFamily="monospace">nonce: {block.nonce}</text>
+            )}
+          </g>
+        );
+      })}
+
+      <defs>
+        <marker id="bc-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#4c4880" />
+        </marker>
+      </defs>
+    </svg>
+  );
+}
+
+/* ─── Quantum Circuit Renderer ───────────────────────────────────────────── */
+interface QGate { qubit: number; col: number; name: string; color?: string }
+interface QCGate { control: number; target: number; col: number }
+interface QMeasure { qubit: number; col: number; result?: string }
+
+function QuantumRenderer({ visualState }: { visualState: VisualState }) {
+  const qubits = (visualState.qubits as { label: string; state: string }[]) ?? [];
+  const gates = (visualState.gates as QGate[]) ?? [];
+  const controlledGates = (visualState.controlledGates as QCGate[] | undefined) ?? [];
+  const measurements = (visualState.measurements as QMeasure[] | undefined) ?? [];
+  const cols = typeof visualState.cols === "number" ? visualState.cols : 4;
+  const currentCol = typeof visualState.currentCol === "number" ? visualState.currentCol : -1;
+
+  const wireGap = 52;
+  const colW = 60;
+  const startX = 100;
+  const startY = 40;
+  const gateSize = 28;
+  const svgW = startX + cols * colW + 60;
+  const svgH = startY + qubits.length * wireGap + 40;
+
+  return (
+    <svg width="100%" height="100%" viewBox={`0 0 ${svgW} ${svgH}`} className="w-full h-full">
+      {/* Column highlights */}
+      {currentCol >= 0 && (
+        <rect x={startX + currentCol * colW - colW / 2 + 4} y={startY - 12} width={colW} height={qubits.length * wireGap} rx={4} fill="#f59e0b18" stroke="#f59e0b40" strokeWidth={1} />
+      )}
+
+      {/* Qubit labels and wires */}
+      {qubits.map((q, qi) => {
+        const y = startY + qi * wireGap;
+        return (
+          <g key={qi}>
+            <text x={startX - 8} y={y + 5} textAnchor="end" fontSize={10} fill="#818cf8" fontFamily="monospace">{q.label}</text>
+            <text x={startX - 8} y={y + 16} textAnchor="end" fontSize={8} fill="#6b7280" fontFamily="monospace">{q.state}</text>
+            <line x1={startX} y1={y} x2={svgW - 20} y2={y} stroke="#3f3f46" strokeWidth={1.5} />
+          </g>
+        );
+      })}
+
+      {/* Single-qubit gates */}
+      {gates.map((g, i) => {
+        const x = startX + g.col * colW;
+        const y = startY + g.qubit * wireGap;
+        const color = g.color ?? "#6366f1";
+        return (
+          <g key={`g-${i}`}>
+            <rect x={x - gateSize / 2} y={y - gateSize / 2} width={gateSize} height={gateSize} rx={4} fill={`${color}30`} stroke={color} strokeWidth={1.5} />
+            <text x={x} y={y + 5} textAnchor="middle" fontSize={10} fontWeight="bold" fill={color} fontFamily="monospace">{g.name}</text>
+          </g>
+        );
+      })}
+
+      {/* CNOT controlled gates */}
+      {controlledGates.map((cg, i) => {
+        const x = startX + cg.col * colW;
+        const cy = startY + cg.control * wireGap;
+        const ty = startY + cg.target * wireGap;
+        return (
+          <g key={`cg-${i}`}>
+            <line x1={x} y1={cy} x2={x} y2={ty} stroke="#818cf8" strokeWidth={1.5} />
+            <circle cx={x} cy={cy} r={5} fill="#818cf8" />
+            <circle cx={x} cy={ty} r={12} fill="#6366f130" stroke="#818cf8" strokeWidth={1.5} />
+            <line x1={x - 12} y1={ty} x2={x + 12} y2={ty} stroke="#818cf8" strokeWidth={1.5} />
+            <line x1={x} y1={ty - 12} x2={x} y2={ty + 12} stroke="#818cf8" strokeWidth={1.5} />
+          </g>
+        );
+      })}
+
+      {/* Measurements */}
+      {measurements.map((m, i) => {
+        const x = startX + m.col * colW;
+        const y = startY + m.qubit * wireGap;
+        return (
+          <g key={`m-${i}`}>
+            <rect x={x - gateSize / 2} y={y - gateSize / 2} width={gateSize} height={gateSize} rx={4} fill="#06b6d430" stroke="#06b6d4" strokeWidth={1.5} />
+            <text x={x} y={y + 5} textAnchor="middle" fontSize={10} fontWeight="bold" fill="#06b6d4" fontFamily="monospace">M</text>
+            {m.result && <text x={x} y={y + gateSize / 2 + 12} textAnchor="middle" fontSize={9} fill="#f59e0b" fontFamily="monospace">{m.result}</text>}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ─── Pipeline Renderer ──────────────────────────────────────────────────── */
+interface PipelineInstruction { name: string; stages: Record<string, number> }
+interface PipelineStall { instruction: number; stage: string; cycle: number }
+
+function PipelineRenderer({ visualState }: { visualState: VisualState }) {
+  const stages = (visualState.stages as string[]) ?? ["IF", "ID", "EX", "MEM", "WB"];
+  const instructions = (visualState.instructions as PipelineInstruction[]) ?? [];
+  const currentCycle = typeof visualState.currentCycle === "number" ? visualState.currentCycle : 0;
+  const stalls = (visualState.stalls as PipelineStall[] | undefined) ?? [];
+  const hazards = (visualState.hazards as string[] | undefined) ?? [];
+
+  const stallSet = new Set(stalls.map((s) => `${s.instruction},${s.stage},${s.cycle}`));
+
+  // Find total cycle range
+  const allCycles: number[] = [];
+  for (const instr of instructions) {
+    allCycles.push(...Object.values(instr.stages));
+  }
+  const minCycle = allCycles.length ? Math.min(...allCycles) : 1;
+  const maxCycle = allCycles.length ? Math.max(...allCycles) : currentCycle;
+  const totalCycles = maxCycle - minCycle + 1;
+
+  const cellW = 36;
+  const cellH = 32;
+  const labelW = 80;
+  const headerH = 28;
+  const svgW = labelW + totalCycles * cellW + 20;
+  const svgH = headerH + instructions.length * cellH + 40;
+
+  function stageColor(stageName: string) {
+    const colors: Record<string, string> = {
+      IF: "#6366f1", ID: "#8b5cf6", EX: "#ec4899", MEM: "#f59e0b", WB: "#10b981",
+    };
+    return colors[stageName] ?? "#6366f1";
+  }
+
+  return (
+    <svg width="100%" height="100%" viewBox={`0 0 ${svgW} ${svgH}`} className="w-full h-full">
+      <text x={svgW / 2} y={14} textAnchor="middle" fontSize={10} fill="#818cf8" fontFamily="monospace" fontWeight="700">PIPELINE DIAGRAM</text>
+
+      {/* Cycle headers */}
+      {Array.from({ length: totalCycles }, (_, i) => {
+        const cycle = minCycle + i;
+        const x = labelW + i * cellW;
+        const isCurrent = cycle === currentCycle;
+        return (
+          <g key={cycle}>
+            {isCurrent && <rect x={x} y={headerH} width={cellW} height={instructions.length * cellH} fill="#f59e0b10" />}
+            <text x={x + cellW / 2} y={headerH - 6} textAnchor="middle" fontSize={9} fill={isCurrent ? "#f59e0b" : "#6b7280"} fontFamily="monospace" fontWeight={isCurrent ? "700" : "400"}>{cycle}</text>
+          </g>
+        );
+      })}
+
+      {/* Instructions */}
+      {instructions.map((instr, ii) => {
+        const y = headerH + ii * cellH;
+        return (
+          <g key={ii}>
+            <text x={labelW - 6} y={y + cellH / 2 + 4} textAnchor="end" fontSize={9} fill="#d1d5db" fontFamily="monospace">{instr.name}</text>
+            {Object.entries(instr.stages).map(([stage, cycle]) => {
+              const ci = cycle - minCycle;
+              const x = labelW + ci * cellW;
+              const isStall = stallSet.has(`${ii},${stage},${cycle}`);
+              const color = isStall ? "#f43f5e" : stageColor(stage);
+              return (
+                <g key={stage}>
+                  <rect x={x + 1} y={y + 2} width={cellW - 2} height={cellH - 4} rx={3} fill={`${color}30`} stroke={color} strokeWidth={1.5} />
+                  <text x={x + cellW / 2} y={y + cellH / 2 + 4} textAnchor="middle" fontSize={8} fontWeight="bold" fill={color} fontFamily="monospace">{stage}</text>
+                </g>
+              );
+            })}
+          </g>
+        );
+      })}
+
+      {/* Hazard labels */}
+      {hazards.length > 0 && (
+        <text x={labelW} y={svgH - 6} fontSize={9} fill="#f43f5e" fontFamily="monospace">Hazards: {hazards.join(", ")}</text>
+      )}
+    </svg>
+  );
+}
+
 /* ─── Placeholder Renderer ────────────────────────────────────────────────── */
 function PlaceholderRenderer() {
   return (
@@ -1465,6 +2060,22 @@ export function VisualizationCanvas({ visualState }: VisualizationCanvasProps) {
     renderer = <HeapRenderer visualState={visualState} />;
   } else if (type === "matrix") {
     renderer = <MatrixRenderer visualState={visualState} />;
+  } else if (type === "bits") {
+    renderer = <BitRenderer visualState={visualState} />;
+  } else if (type === "geometry") {
+    renderer = <GeometryRenderer visualState={visualState} />;
+  } else if (type === "textmatch") {
+    renderer = <TextMatchRenderer visualState={visualState} />;
+  } else if (type === "scatter") {
+    renderer = <ScatterRenderer visualState={visualState} />;
+  } else if (type === "neural") {
+    renderer = <NeuralNetRenderer visualState={visualState} />;
+  } else if (type === "blockchain") {
+    renderer = <BlockchainRenderer visualState={visualState} />;
+  } else if (type === "quantum") {
+    renderer = <QuantumRenderer visualState={visualState} />;
+  } else if (type === "pipeline") {
+    renderer = <PipelineRenderer visualState={visualState} />;
   } else {
     // Default: sorting bar chart (handles array-based states without a type)
     renderer = <SortingRenderer visualState={visualState} />;

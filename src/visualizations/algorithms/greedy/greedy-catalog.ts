@@ -1,36 +1,6 @@
-import { createPlaceholderModule } from "@/visualizations/placeholder";
-
-export const activitySelectionModule = createPlaceholderModule(
-  "activity-selection", "activity-selection", "Activity Selection",
-  ["algorithms", "greedy"], "intermediate",
-);
-
-export const jobSchedulingModule = createPlaceholderModule(
-  "job-scheduling", "job-scheduling", "Job Scheduling",
-  ["algorithms", "greedy"], "intermediate",
-);
-
-export const huffmanCodingModule = createPlaceholderModule(
-  "huffman-coding", "huffman-coding", "Huffman Coding",
-  ["algorithms", "greedy"], "intermediate",
-);
-
-export const fractionalKnapsackModule = createPlaceholderModule(
-  "fractional-knapsack", "fractional-knapsack", "Fractional Knapsack",
-  ["algorithms", "greedy"], "beginner",
-);
-
-export const egyptianFractionModule = createPlaceholderModule(
-  "egyptian-fraction", "egyptian-fraction", "Egyptian Fraction",
-  ["algorithms", "greedy"], "intermediate",
-);
-
-export const minimumPlatformsModule = createPlaceholderModule(
-  "minimum-platforms", "minimum-platforms", "Minimum Platforms",
-  ["algorithms", "greedy"], "intermediate",
-);
-
-export const gasStationModule = createPlaceholderModule(
-  "gas-station", "gas-station", "Gas Station",
-  ["algorithms", "greedy"], "intermediate",
-);
+// Re-export individual greedy implementations
+export { jobSchedulingModule } from "@/visualizations/algorithms/greedy/job-scheduling";
+export { fractionalKnapsackModule } from "@/visualizations/algorithms/greedy/fractional-knapsack";
+export { egyptianFractionModule } from "@/visualizations/algorithms/greedy/egyptian-fraction";
+export { minimumPlatformsModule } from "@/visualizations/algorithms/greedy/minimum-platforms";
+export { gasStationModule } from "@/visualizations/algorithms/greedy/gas-station";

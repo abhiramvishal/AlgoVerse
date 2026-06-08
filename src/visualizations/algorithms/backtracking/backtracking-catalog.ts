@@ -1,46 +1,9 @@
-import { createPlaceholderModule } from "@/visualizations/placeholder";
-
-export const nQueensModule = createPlaceholderModule(
-  "n-queens", "n-queens", "N-Queens",
-  ["algorithms", "backtracking"], "intermediate",
-);
-
-export const sudokuSolverModule = createPlaceholderModule(
-  "sudoku-solver", "sudoku-solver", "Sudoku Solver",
-  ["algorithms", "backtracking"], "intermediate",
-);
-
-export const permutationsBtModule = createPlaceholderModule(
-  "permutations-bt", "permutations-bt", "Permutations",
-  ["algorithms", "backtracking"], "beginner",
-);
-
-export const combinationsBtModule = createPlaceholderModule(
-  "combinations-bt", "combinations-bt", "Combinations",
-  ["algorithms", "backtracking"], "beginner",
-);
-
-export const subsetsBtModule = createPlaceholderModule(
-  "subsets-bt", "subsets-bt", "Subsets",
-  ["algorithms", "backtracking"], "beginner",
-);
-
-export const wordSearchBtModule = createPlaceholderModule(
-  "word-search-bt", "word-search-bt", "Word Search",
-  ["algorithms", "backtracking"], "intermediate",
-);
-
-export const ratInMazeModule = createPlaceholderModule(
-  "rat-in-maze", "rat-in-maze", "Rat in a Maze",
-  ["algorithms", "backtracking"], "intermediate",
-);
-
-export const graphColoringModule = createPlaceholderModule(
-  "graph-coloring", "graph-coloring", "Graph Coloring",
-  ["algorithms", "backtracking"], "intermediate",
-);
-
-export const hamiltonianPathModule = createPlaceholderModule(
-  "hamiltonian-path", "hamiltonian-path", "Hamiltonian Path",
-  ["algorithms", "backtracking"], "advanced",
-);
+// Re-export individual backtracking implementations
+export { sudokuSolverModule } from "@/visualizations/algorithms/backtracking/sudoku-solver";
+export { permutationsBtModule } from "@/visualizations/algorithms/backtracking/permutations";
+export { combinationsBtModule } from "@/visualizations/algorithms/backtracking/combinations";
+export { subsetsBtModule } from "@/visualizations/algorithms/backtracking/subsets";
+export { wordSearchBtModule } from "@/visualizations/algorithms/backtracking/word-search";
+export { ratInMazeModule } from "@/visualizations/algorithms/backtracking/rat-in-maze";
+export { graphColoringModule } from "@/visualizations/algorithms/backtracking/graph-coloring";
+export { hamiltonianPathModule } from "@/visualizations/algorithms/backtracking/hamiltonian-path";
