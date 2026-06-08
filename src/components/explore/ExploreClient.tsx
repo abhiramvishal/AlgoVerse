@@ -35,7 +35,7 @@ export function ExploreClient({ initialSlug = "bubble-sort" }: ExploreClientProp
   const searchParams = useSearchParams();
   const [initialStep] = useState(() => Number(searchParams.get("step") ?? "0"));
 
-  const { module: vm, steps, setSlug, setInput, input } = useVisualization();
+  const { module: vm, steps, setSlug, setInput, input, isPending } = useVisualization();
 
   const parsedInputFromQuery = useMemo(
     () => parseInputFromQuery(searchParams.get("input")),
@@ -198,8 +198,8 @@ export function ExploreClient({ initialSlug = "bubble-sort" }: ExploreClientProp
           <motion.div
             key={vm.slug}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: SPRING }}
-            className="flex-1 min-h-0 p-3"
+            animate={{ opacity: isPending ? 0.4 : 1, transition: SPRING }}
+            className="flex-1 min-h-0 p-3 relative"
           >
             {isPlaceholder ? (
               <div className="flex h-full items-center justify-center flex-col gap-3 text-center">
