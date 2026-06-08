@@ -37,6 +37,7 @@ export const skipListModule: VisualizationModule<number[]> = {
   timeComplexity: "O(log n) expected",
   spaceComplexity: "O(n log n)",
   description: "Probabilistic data structure with multiple layers of linked lists for fast search, insert, and delete.",
+  relatedTopics: [],
   pythonCode: `import random
 
 class SkipNode:
@@ -149,6 +150,7 @@ export const redBlackTreeModule: VisualizationModule<number[]> = {
   timeComplexity: "O(log n)",
   spaceComplexity: "O(n)",
   description: "Self-balancing BST where nodes are colored red/black and rotations maintain invariants guaranteeing O(log n) height.",
+  relatedTopics: [],
   pythonCode: `class RBNode:
     def __init__(self, val):
         self.val = val
@@ -258,6 +260,7 @@ export const bTreeModule: VisualizationModule<number[]> = {
   timeComplexity: "O(log n)",
   spaceComplexity: "O(n)",
   description: "Self-balancing multi-way search tree for databases/filesystems. Nodes hold up to 2t-1 keys; splits keep tree balanced.",
+  relatedTopics: [],
   pythonCode: `class BTreeNode:
     def __init__(self, leaf=True):
         self.keys = []
@@ -369,6 +372,7 @@ export const splayTreeModule: VisualizationModule<number[]> = {
   timeComplexity: "O(log n) amortized",
   spaceComplexity: "O(n)",
   description: "Self-adjusting BST: every access splays node to root via Zig/Zig-Zig/Zig-Zag rotations. Amortized O(log n).",
+  relatedTopics: [],
   pythonCode: `class SplayNode:
     def __init__(self, val):
         self.val = val
@@ -474,6 +478,7 @@ export const fibonacciHeapModule: VisualizationModule<number[]> = {
   timeComplexity: "O(1) insert, O(log n) extract-min",
   spaceComplexity: "O(n)",
   description: "Lazy heap: O(1) amortized insert and decrease-key. Consolidation deferred until extract-min. Enables optimal Dijkstra.",
+  relatedTopics: [],
   pythonCode: `class FibNode:
     def __init__(self, val):
         self.val = val
@@ -594,6 +599,7 @@ export const adjacencyMatrixModule: VisualizationModule<null> = {
   timeComplexity: "O(1) edge check",
   spaceComplexity: "O(V²)",
   description: "Graph stored as V×V boolean matrix. O(1) edge check but O(V²) space even for sparse graphs.",
+  relatedTopics: [],
   pythonCode: `class AdjacencyMatrix:
     def __init__(self, n):
         self.n = n
@@ -697,6 +703,7 @@ export const edgeListModule: VisualizationModule<null> = {
   timeComplexity: "O(E) edge check",
   spaceComplexity: "O(E)",
   description: "Simplest graph representation: list of (u,v,weight) tuples. Compact for sparse graphs; sorting enables Kruskal's MST.",
+  relatedTopics: [],
   pythonCode: `class EdgeList:
     def __init__(self):
         self.edges = []
@@ -778,6 +785,7 @@ export const lfuCacheModule: VisualizationModule<null> = {
   timeComplexity: "O(1)",
   spaceComplexity: "O(capacity)",
   description: "Least Frequently Used cache: evicts item with fewest total accesses. Ties broken by LRU (insertion) order.",
+  relatedTopics: [],
   pythonCode: `from collections import defaultdict, OrderedDict
 
 class LFUCache:
@@ -922,6 +930,7 @@ export const lsmTreeModule: VisualizationModule<null> = {
   timeComplexity: "O(1) write (amortized)",
   spaceComplexity: "O(n)",
   description: "Log-Structured Merge Tree: writes to MemTable, flushed as sorted SSTables. Used in Cassandra, RocksDB, LevelDB.",
+  relatedTopics: [],
   pythonCode: `class MemTable:
     def __init__(self, max_size=4):
         self.data = {}
@@ -1037,6 +1046,7 @@ export const ropeDsModule: VisualizationModule<null> = {
   timeComplexity: "O(log n) index/concat",
   spaceComplexity: "O(n)",
   description: "Binary tree for large string ops: O(log n) index, concat, split. Used in text editors for efficient large-text manipulation.",
+  relatedTopics: [],
   pythonCode: `class RopeNode:
     def __init__(self, val=""):
         self.val = val           # non-empty only at leaves

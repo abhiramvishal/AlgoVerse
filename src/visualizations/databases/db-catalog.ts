@@ -6,6 +6,7 @@ export const btreeIndexModule: VisualizationModule<null> = {
   category: ["databases", "indexing"], difficulty: "intermediate",
   timeComplexity: "O(log n)", spaceComplexity: "O(n)",
   description: "PostgreSQL/MySQL default index: B-Tree supports range queries, ORDER BY, equality. Keeps data sorted on disk pages.",
+  relatedTopics: [],
   pythonCode: `# B-Tree Index (database style)
 # Used by: PostgreSQL, MySQL InnoDB
 
@@ -99,6 +100,7 @@ export const hashIndexModule: VisualizationModule<null> = {
   category: ["databases", "indexing"], difficulty: "intermediate",
   timeComplexity: "O(1) equality", spaceComplexity: "O(n)",
   description: "Hash index: O(1) equality lookups. No range queries. Used by PostgreSQL HASH indexes and MySQL MEMORY engine.",
+  relatedTopics: [],
   pythonCode: `# Hash Index — database internals
 
 # Hash function maps key → bucket
@@ -190,6 +192,7 @@ export const lsmIndexModule: VisualizationModule<null> = {
   category: ["databases", "indexing"], difficulty: "advanced",
   timeComplexity: "O(1) write, O(log n) read", spaceComplexity: "O(n)",
   description: "Log-Structured Merge Tree index: fast writes to MemTable, compaction merges SSTables. Used in Cassandra, RocksDB, LevelDB.",
+  relatedTopics: [],
   pythonCode: `# LSM Tree Index — Write-Optimized
 
 # Write path: O(1) amortized
@@ -277,6 +280,7 @@ export const bitmapIndexModule: VisualizationModule<null> = {
   category: ["databases", "indexing"], difficulty: "intermediate",
   timeComplexity: "O(n/64) AND/OR", spaceComplexity: "O(n × cardinality)",
   description: "Bitmap index: one bit per row per value. Fast bitwise AND/OR for multi-condition queries. Best for low-cardinality columns.",
+  relatedTopics: [],
   pythonCode: `# Bitmap Index — Low Cardinality Columns
 
 # Example: gender column with 2 values (M/F)
@@ -362,6 +366,7 @@ export const nestedLoopJoinModule: VisualizationModule<null> = {
   category: ["databases", "query-processing"], difficulty: "intermediate",
   timeComplexity: "O(n×m)", spaceComplexity: "O(1)",
   description: "Simplest join: for each row in outer table, scan all rows in inner table. O(n×m) but works for any join condition.",
+  relatedTopics: [],
   pythonCode: `# Nested Loop Join
 
 def nested_loop_join(outer, inner, predicate):
@@ -440,6 +445,7 @@ export const hashJoinModule: VisualizationModule<null> = {
   category: ["databases", "query-processing"], difficulty: "intermediate",
   timeComplexity: "O(n+m)", spaceComplexity: "O(min(n,m))",
   description: "Build hash table on smaller relation, probe with larger. O(n+m) but requires memory for hash table.",
+  relatedTopics: [],
   pythonCode: `# Hash Join — O(n + m)
 
 def hash_join(build_rel, probe_rel, key_fn):
@@ -542,6 +548,7 @@ export const sortMergeJoinModule: VisualizationModule<null> = {
   category: ["databases", "query-processing"], difficulty: "intermediate",
   timeComplexity: "O(n log n + m log m)", spaceComplexity: "O(1) merge",
   description: "Sort both relations on join key, then merge. Excellent for pre-sorted data or when result needs sorting. Used in analytics.",
+  relatedTopics: [],
   pythonCode: `# Sort-Merge Join
 
 def sort_merge_join(rel_a, rel_b, key_fn):
@@ -643,6 +650,7 @@ export const queryOptimizationModule: VisualizationModule<null> = {
   category: ["databases", "query-processing"], difficulty: "advanced",
   timeComplexity: "O(2^n) plan enumeration", spaceComplexity: "O(plans)",
   description: "Query optimizer: parse SQL → logical plan → physical plan. Uses statistics, cost model, and plan enumeration to find cheapest execution.",
+  relatedTopics: [],
   pythonCode: `# Query Optimization Pipeline
 
 # 1. Parse SQL → AST
@@ -723,6 +731,7 @@ export const twoPhaseLockingModule: VisualizationModule<null> = {
   category: ["databases", "concurrency"], difficulty: "intermediate",
   timeComplexity: "O(1) per lock op", spaceComplexity: "O(locks held)",
   description: "2PL ensures serializability: growing phase (acquire locks), shrinking phase (release locks). Strict 2PL holds locks until commit.",
+  relatedTopics: [],
   pythonCode: `# Two-Phase Locking (2PL)
 
 class Transaction:
@@ -814,6 +823,7 @@ export const mvccModule: VisualizationModule<null> = {
   category: ["databases", "concurrency"], difficulty: "advanced",
   timeComplexity: "O(1) read (no locks)", spaceComplexity: "O(versions)",
   description: "Multi-Version Concurrency Control: readers don't block writers. Each transaction sees a snapshot. Used in PostgreSQL, MySQL InnoDB.",
+  relatedTopics: [],
   pythonCode: `# MVCC — Multi-Version Concurrency Control
 
 # Each row has multiple versions with timestamps
@@ -912,6 +922,7 @@ export const acidModule: VisualizationModule<null> = {
   category: ["databases", "concurrency"], difficulty: "beginner",
   timeComplexity: "O(1) per property check", spaceComplexity: "O(1)",
   description: "ACID: Atomicity, Consistency, Isolation, Durability. Four properties that guarantee reliable database transactions.",
+  relatedTopics: [],
   pythonCode: `# ACID Properties in Practice
 
 # Atomicity: all-or-nothing
@@ -986,6 +997,7 @@ export const heapFileModule: VisualizationModule<null> = {
   category: ["databases", "storage"], difficulty: "beginner",
   timeComplexity: "O(n) scan, O(1) insert", spaceComplexity: "O(n)",
   description: "Unordered file: pages of tuples with no particular order. Simple O(1) insert, O(n) scan. Foundation of database storage.",
+  relatedTopics: [],
   pythonCode: `# Heap File — Unordered Page Storage
 
 class HeapFile:
@@ -1085,6 +1097,7 @@ export const rowVsColumnModule: VisualizationModule<null> = {
   category: ["databases", "storage"], difficulty: "intermediate",
   timeComplexity: "O(n/cols) for column scan", spaceComplexity: "O(n)",
   description: "Row store (OLTP): fast single-row access. Column store (OLAP): fast aggregations, high compression. Trade-off for workload type.",
+  relatedTopics: [],
   pythonCode: `# Row Store vs Column Store
 
 # Same data: 3 rows × 4 columns
@@ -1188,6 +1201,7 @@ export const walModule: VisualizationModule<null> = {
   category: ["databases", "storage"], difficulty: "intermediate",
   timeComplexity: "O(1) write (sequential)", spaceComplexity: "O(log entries)",
   description: "WAL: log changes BEFORE applying to data pages. Sequential writes are fast. Enables crash recovery and replication.",
+  relatedTopics: [],
   pythonCode: `# Write-Ahead Log (WAL)
 
 # WAL Rule: write log record BEFORE modifying data page

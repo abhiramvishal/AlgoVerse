@@ -11,9 +11,10 @@ function bits(stepNumber: number, description: string, lines: number[], number: 
 // ─── XOR Cipher ──────────────────────────────────────────────────────────────
 export const xorCipherModule: VisualizationModule<{plaintext:string,key:string}> = {
   id: "xor-cipher", slug: "xor-cipher", title: "XOR Cipher",
-  category: "cryptography", difficulty: "Beginner",
+  category: ["cryptography"], difficulty: "beginner",
   timeComplexity: "O(n)", spaceComplexity: "O(n)",
   description: "Encrypts each plaintext byte by XOR-ing with a repeating key byte.",
+  relatedTopics: [],
   pythonCode: `def xor_cipher(plaintext: str, key: str) -> bytes:
     key_bytes = key.encode()
     result = []
@@ -32,9 +33,9 @@ ct = xor_cipher(pt, key)
 print([hex(b) for b in ct])
 pt2 = xor_decrypt(ct.decode('latin-1'), key)`,
   codeSteps: [
-    { line: 1, description: "plaintext and key as byte sequences" },
-    { line: 4, description: "XOR each byte with corresponding key byte (cyclic)" },
-    { line: 8, description: "Decryption = encryption (XOR is self-inverse)" },
+    { stepNumber: 1, highlightLines: [1] },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 8, highlightLines: [8] },
   ],
   defaultInput: {plaintext: "HELLO", key: "KEY"},
   generateSteps({plaintext, key}) {
@@ -53,9 +54,10 @@ pt2 = xor_decrypt(ct.decode('latin-1'), key)`,
 // ─── Stream Cipher ────────────────────────────────────────────────────────────
 export const streamCipherModule: VisualizationModule<{key:number,nonce:number}> = {
   id: "stream-cipher", slug: "stream-cipher", title: "Stream Cipher (ChaCha20)",
-  category: "cryptography", difficulty: "Intermediate",
+  category: ["cryptography"], difficulty: "intermediate",
   timeComplexity: "O(n)", spaceComplexity: "O(1)",
   description: "Generates a pseudorandom keystream from key+nonce, XOR-ed with plaintext.",
+  relatedTopics: [],
   pythonCode: `def quarter_round(a, b, c, d):
     a = (a + b) & 0xFFFFFFFF; d ^= a; d = rotate(d, 16)
     c = (c + d) & 0xFFFFFFFF; b ^= c; b = rotate(b, 12)
@@ -73,11 +75,11 @@ def chacha20_block(key, nonce, counter):
         working = quarter_round(*working[1,5,9,13])
     return [(s + w) & 0xFFFFFFFF for s, w in zip(state, working)]`,
   codeSteps: [
-    { line: 1, description: "Quarter round: ARX (add-rotate-XOR) operations" },
-    { line: 8, description: "ChaCha20 block: 4×4 state matrix" },
-    { line: 10, description: "20 rounds = 10 double-rounds" },
-    { line: 12, description: "Column rounds mix columns" },
-    { line: 14, description: "Diagonal rounds mix diagonals" },
+    { stepNumber: 1, highlightLines: [1] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: {key: 0xAB, nonce: 0x01},
   generateSteps({key, nonce}) {
@@ -96,9 +98,10 @@ def chacha20_block(key, nonce, counter):
 // ─── AES ─────────────────────────────────────────────────────────────────────
 export const aesModule: VisualizationModule<string> = {
   id: "aes", slug: "aes", title: "AES Encryption",
-  category: "cryptography", difficulty: "Advanced",
+  category: ["cryptography"], difficulty: "advanced",
   timeComplexity: "O(n)", spaceComplexity: "O(1)",
   description: "AES-128: 10 rounds of SubBytes, ShiftRows, MixColumns, AddRoundKey.",
+  relatedTopics: [],
   pythonCode: `from Crypto.Cipher import AES
 import os
 
@@ -118,12 +121,12 @@ def aes_round(state, round_key):
     state = add_round_key(state, round_key)
     return state`,
   codeSteps: [
-    { line: 6, description: "PKCS7 padding to 16-byte blocks" },
-    { line: 8, description: "Random IV for CBC mode" },
-    { line: 12, description: "SubBytes: non-linear S-box substitution" },
-    { line: 13, description: "ShiftRows: rotate rows left" },
-    { line: 14, description: "MixColumns: diffuse within columns" },
-    { line: 15, description: "AddRoundKey: XOR with round key" },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 13, highlightLines: [13] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 15, highlightLines: [15] },
   ],
   defaultInput: "HELLO WORLD!!!!",
   generateSteps(pt) {
@@ -141,9 +144,10 @@ def aes_round(state, round_key):
 // ─── DES ─────────────────────────────────────────────────────────────────────
 export const desModule: VisualizationModule<string> = {
   id: "des", slug: "des", title: "DES Encryption",
-  category: "cryptography", difficulty: "Advanced",
+  category: ["cryptography"], difficulty: "advanced",
   timeComplexity: "O(n)", spaceComplexity: "O(1)",
   description: "Data Encryption Standard: 16 Feistel rounds with 56-bit key (now insecure).",
+  relatedTopics: [],
   pythonCode: `def des_round(L, R, subkey):
     # Feistel structure
     new_L = R
@@ -163,12 +167,12 @@ def des_encrypt(plaintext, key):
         L, R = des_round(L, R, subkey)
     return final_permutation(R + L)`,
   codeSteps: [
-    { line: 2, description: "Feistel: new_L = R (swap halves)" },
-    { line: 3, description: "new_R = L XOR f(R, subkey)" },
-    { line: 7, description: "Expand R from 32 to 48 bits" },
-    { line: 8, description: "XOR with 48-bit subkey" },
-    { line: 9, description: "S-boxes compress 48→32 with non-linearity" },
-    { line: 13, description: "16 rounds with different subkeys" },
+    { stepNumber: 2, highlightLines: [2] },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 13, highlightLines: [13] },
   ],
   defaultInput: "MYSECRET",
   generateSteps(pt) {
@@ -191,9 +195,10 @@ def des_encrypt(plaintext, key):
 // ─── RSA ─────────────────────────────────────────────────────────────────────
 export const rsaModule: VisualizationModule<{p:number,q:number,e:number}> = {
   id: "rsa", slug: "rsa", title: "RSA",
-  category: "cryptography", difficulty: "Advanced",
+  category: ["cryptography"], difficulty: "advanced",
   timeComplexity: "O(log²n) per op", spaceComplexity: "O(log n)",
   description: "Asymmetric encryption based on difficulty of factoring large integers.",
+  relatedTopics: [],
   pythonCode: `from math import gcd
 
 def modinv(a, m):
@@ -217,11 +222,11 @@ pub, priv = rsa_keygen(61, 53, 17)
 ct = rsa_encrypt(65, *pub)
 pt = rsa_decrypt(ct, *priv)`,
   codeSteps: [
-    { line: 8, description: "n = p·q (public modulus)" },
-    { line: 9, description: "φ(n) = (p-1)(q-1)" },
-    { line: 12, description: "d = e⁻¹ mod φ(n) (private key)" },
-    { line: 15, description: "Encrypt: c = mᵉ mod n" },
-    { line: 16, description: "Decrypt: m = cᵈ mod n" },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 15, highlightLines: [15] },
+    { stepNumber: 16, highlightLines: [16] },
   ],
   defaultInput: {p:61, q:53, e:17},
   generateSteps({p, q, e}) {
@@ -244,9 +249,10 @@ pt = rsa_decrypt(ct, *priv)`,
 // ─── Diffie-Hellman ───────────────────────────────────────────────────────────
 export const diffieHellmanModule: VisualizationModule<{p:number,g:number}> = {
   id: "diffie-hellman", slug: "diffie-hellman", title: "Diffie-Hellman Key Exchange",
-  category: "cryptography", difficulty: "Intermediate",
+  category: ["cryptography"], difficulty: "intermediate",
   timeComplexity: "O(log p)", spaceComplexity: "O(1)",
   description: "Two parties agree on a shared secret over a public channel using discrete log hardness.",
+  relatedTopics: [],
   pythonCode: `# Public parameters
 p = 23   # prime modulus
 g = 5    # primitive root (generator)
@@ -264,11 +270,11 @@ alice_secret = pow(B, a, p)   # B^a mod p
 bob_secret   = pow(A, b, p)   # A^b mod p
 # alice_secret == bob_secret  (both = g^(ab) mod p)`,
   codeSteps: [
-    { line: 2, description: "p: public prime; g: generator" },
-    { line: 6, description: "Private keys a, b kept secret" },
-    { line: 9, description: "Public values A=gᵃ mod p, B=gᵇ mod p" },
-    { line: 12, description: "Alice: Bᵃ mod p = shared secret" },
-    { line: 13, description: "Bob: Aᵇ mod p = same shared secret" },
+    { stepNumber: 2, highlightLines: [2] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 13, highlightLines: [13] },
   ],
   defaultInput: {p:23, g:5},
   generateSteps({p, g}) {
@@ -288,9 +294,10 @@ bob_secret   = pow(A, b, p)   # A^b mod p
 // ─── ECDH ─────────────────────────────────────────────────────────────────────
 export const ecdhModule: VisualizationModule<string> = {
   id: "ecdh", slug: "ecdh", title: "ECDH Key Exchange",
-  category: "cryptography", difficulty: "Advanced",
+  category: ["cryptography"], difficulty: "advanced",
   timeComplexity: "O(log n) point mult", spaceComplexity: "O(1)",
   description: "Diffie-Hellman over elliptic curves — same security with smaller keys.",
+  relatedTopics: [],
   pythonCode: `# Elliptic curve: y² = x³ + ax + b (mod p)
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 
@@ -311,11 +318,11 @@ bob_shared   = bob_private.exchange(alice_public)
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 key = HKDF(SHA256(), 32, None, b"handshake").derive(alice_shared)`,
   codeSteps: [
-    { line: 4, description: "Generate private scalar (random)" },
-    { line: 5, description: "Public key = private * G (generator point)" },
-    { line: 11, description: "Alice: alice_private × bob_public point" },
-    { line: 12, description: "Bob: bob_private × alice_public point" },
-    { line: 16, description: "Derive symmetric key via HKDF" },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 16, highlightLines: [16] },
   ],
   defaultInput: "curve25519",
   generateSteps(curve) {
@@ -332,9 +339,10 @@ key = HKDF(SHA256(), 32, None, b"handshake").derive(alice_shared)`,
 // ─── ElGamal ──────────────────────────────────────────────────────────────────
 export const elgamalModule: VisualizationModule<{p:number,g:number,m:number}> = {
   id: "elgamal", slug: "elgamal", title: "ElGamal Encryption",
-  category: "cryptography", difficulty: "Advanced",
+  category: ["cryptography"], difficulty: "advanced",
   timeComplexity: "O(log p)", spaceComplexity: "O(1)",
   description: "Asymmetric encryption based on discrete log; produces probabilistic ciphertexts.",
+  relatedTopics: [],
   pythonCode: `import random
 
 def elgamal_keygen(p, g):
@@ -353,12 +361,12 @@ def elgamal_decrypt(p, x, c1, c2):
     s_inv = pow(s, p-2, p)        # modular inverse (Fermat)
     return (c2 * s_inv) % p`,
   codeSteps: [
-    { line: 3, description: "Private key x (random)" },
-    { line: 4, description: "Public h = gˣ mod p" },
-    { line: 8, description: "Ephemeral y (new per encryption)" },
-    { line: 9, description: "c1 = gʸ mod p" },
-    { line: 10, description: "c2 = m · hʸ mod p" },
-    { line: 14, description: "Decrypt: s = c1ˣ, m = c2 · s⁻¹ mod p" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: {p:23,g:5,m:10},
   generateSteps({p,g,m}) {
@@ -381,9 +389,10 @@ def elgamal_decrypt(p, x, c1, c2):
 // ─── SHA-256 ─────────────────────────────────────────────────────────────────
 export const sha256Module: VisualizationModule<string> = {
   id: "sha256", slug: "sha256", title: "SHA-256",
-  category: "cryptography", difficulty: "Intermediate",
+  category: ["cryptography"], difficulty: "intermediate",
   timeComplexity: "O(n)", spaceComplexity: "O(1)",
   description: "Cryptographic hash: 64 rounds of compression producing a 256-bit digest.",
+  relatedTopics: [],
   pythonCode: `import struct, hashlib
 
 # SHA-256 constants (first 32 bits of cube roots of first 64 primes)
@@ -408,12 +417,12 @@ def sha256_compress(chunk, h0, h1, h2, h3, h4, h5, h6, h7):
         h,g,f,e,d,c,b,a = g,f,e,(d+T1)&M,c,b,a,(T1+T2)&M
     return (h0+a)&M, ...`,
   codeSteps: [
-    { line: 7, description: "Split 512-bit chunk into 16 words W[0..15]" },
-    { line: 9, description: "Extend to 64 words via message schedule" },
-    { line: 13, description: "Initialize working variables a..h" },
-    { line: 15, description: "Σ1(e): bitwise rotation-XOR" },
-    { line: 17, description: "T1 combines h + Σ1 + Ch + K[i] + W[i]" },
-    { line: 20, description: "Rotate working variables" },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 13, highlightLines: [13] },
+    { stepNumber: 15, highlightLines: [15] },
+    { stepNumber: 17, highlightLines: [17] },
+    { stepNumber: 20, highlightLines: [20] },
   ],
   defaultInput: "hello",
   generateSteps(msg) {
@@ -431,9 +440,10 @@ def sha256_compress(chunk, h0, h1, h2, h3, h4, h5, h6, h7):
 // ─── Merkle Tree (Crypto) ────────────────────────────────────────────────────
 export const merkleCryptoModule: VisualizationModule<string[]> = {
   id: "merkle-crypto", slug: "merkle-crypto", title: "Merkle Tree",
-  category: "cryptography", difficulty: "Intermediate",
+  category: ["cryptography"], difficulty: "intermediate",
   timeComplexity: "O(n log n)", spaceComplexity: "O(n)",
   description: "Binary hash tree enabling efficient and secure verification of large data.",
+  relatedTopics: [],
   pythonCode: `import hashlib
 
 def sha256(data: str) -> str:
@@ -457,11 +467,11 @@ def merkle_proof(tree, index):
         index //= 2
     return proof`,
   codeSteps: [
-    { line: 6, description: "Hash each leaf: SHA-256(data)" },
-    { line: 9, description: "Pair hashes and hash again" },
-    { line: 10, description: "Duplicate last node if odd count" },
-    { line: 13, description: "Root: single hash representing all data" },
-    { line: 16, description: "Proof: sibling hashes along path to root" },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 13, highlightLines: [13] },
+    { stepNumber: 16, highlightLines: [16] },
   ],
   defaultInput: ["Tx1","Tx2","Tx3","Tx4"],
   generateSteps(leaves) {
@@ -483,9 +493,10 @@ def merkle_proof(tree, index):
 // ─── HMAC ─────────────────────────────────────────────────────────────────────
 export const hmacModule: VisualizationModule<{message:string,key:string}> = {
   id: "hmac", slug: "hmac", title: "HMAC",
-  category: "cryptography", difficulty: "Intermediate",
+  category: ["cryptography"], difficulty: "intermediate",
   timeComplexity: "O(n)", spaceComplexity: "O(1)",
   description: "Hash-based Message Authentication Code: authenticates message integrity and origin.",
+  relatedTopics: [],
   pythonCode: `import hashlib, hmac
 
 def hmac_sha256(key: bytes, message: bytes) -> bytes:
@@ -506,11 +517,11 @@ expected = hmac_sha256(b"secret", b"hello")
 received = hmac_sha256(b"secret", b"hello")
 assert hmac.compare_digest(expected, received)`,
   codeSteps: [
-    { line: 5, description: "Normalize key to block size" },
-    { line: 9, description: "ipad = key XOR 0x36 (inner padding)" },
-    { line: 10, description: "opad = key XOR 0x5C (outer padding)" },
-    { line: 12, description: "Inner hash: H(ipad || message)" },
-    { line: 13, description: "HMAC: H(opad || inner_hash)" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 13, highlightLines: [13] },
   ],
   defaultInput: {message: "hello", key: "secret"},
   generateSteps({message, key}) {
@@ -527,9 +538,10 @@ assert hmac.compare_digest(expected, received)`,
 // ─── bcrypt ───────────────────────────────────────────────────────────────────
 export const bcryptModule: VisualizationModule<{password:string,cost:number}> = {
   id: "bcrypt", slug: "bcrypt", title: "bcrypt Password Hashing",
-  category: "cryptography", difficulty: "Intermediate",
+  category: ["cryptography"], difficulty: "intermediate",
   timeComplexity: "O(2^cost)", spaceComplexity: "O(1)",
   description: "Adaptive password hashing: slow by design with salt to prevent brute force.",
+  relatedTopics: [],
   pythonCode: `import bcrypt
 
 def hash_password(password: str, cost: int = 12) -> str:
@@ -549,11 +561,11 @@ def verify_password(password: str, hashed: str) -> bool:
 # 2. Encrypt OrpheanBeholderScryDoubt 64 times
 # 3. Output: salt + ciphertext`,
   codeSteps: [
-    { line: 3, description: "gensalt: generate random 128-bit salt with cost rounds" },
-    { line: 4, description: "hashpw: expensive Blowfish key setup (2^cost iterations)" },
-    { line: 7, description: "Verify: re-hash and constant-time compare" },
-    { line: 14, description: "Key setup: 2^cost iterations — tunable slowness" },
-    { line: 15, description: "Encrypt fixed string 64 times" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 15, highlightLines: [15] },
   ],
   defaultInput: {password: "hunter2", cost: 12},
   generateSteps({password, cost}) {
@@ -570,9 +582,10 @@ def verify_password(password: str, hashed: str) -> bool:
 // ─── TLS Protocol ─────────────────────────────────────────────────────────────
 export const tlsProtocolModule: VisualizationModule<string> = {
   id: "tls-protocol", slug: "tls-protocol", title: "TLS 1.3 Handshake",
-  category: "cryptography", difficulty: "Advanced",
+  category: ["cryptography"], difficulty: "advanced",
   timeComplexity: "O(1) RTT", spaceComplexity: "O(1)",
   description: "TLS 1.3: 1-RTT handshake with ECDHE key exchange and forward secrecy.",
+  relatedTopics: [],
   pythonCode: `# TLS 1.3 Handshake (simplified)
 # Client                          Server
 # ─────────────────────────────────────
@@ -592,11 +605,11 @@ export const tlsProtocolModule: VisualizationModule<string> = {
 # handshake_secret = HKDF-Extract(ECDHE_output, early_secret)
 # master_secret    = HKDF-Extract(0, handshake_secret)`,
   codeSteps: [
-    { line: 4, description: "ClientHello: supported ciphers + key_share (ECDHE public key)" },
-    { line: 5, description: "ServerHello: chosen cipher + server key_share" },
-    { line: 6, description: "Server sends encrypted extensions and certificate" },
-    { line: 10, description: "Finished: verify entire handshake transcript" },
-    { line: 13, description: "HKDF derives traffic keys from ECDHE shared secret" },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 13, highlightLines: [13] },
   ],
   defaultInput: "TLS_AES_256_GCM_SHA384",
   generateSteps(cipher) {
@@ -613,9 +626,10 @@ export const tlsProtocolModule: VisualizationModule<string> = {
 // ─── PGP ─────────────────────────────────────────────────────────────────────
 export const pgpModule: VisualizationModule<string> = {
   id: "pgp", slug: "pgp", title: "PGP Encryption",
-  category: "cryptography", difficulty: "Advanced",
+  category: ["cryptography"], difficulty: "advanced",
   timeComplexity: "O(n)", spaceComplexity: "O(n)",
   description: "Pretty Good Privacy: hybrid encryption with RSA key encapsulation and AES data encryption.",
+  relatedTopics: [],
   pythonCode: `import gnupg
 
 def pgp_encrypt(plaintext: str, recipient_fingerprint: str) -> str:
@@ -634,12 +648,12 @@ def pgp_decrypt(ciphertext: str, passphrase: str) -> str:
     result = gpg.decrypt(ciphertext, passphrase=passphrase)
     return str(result)`,
   codeSteps: [
-    { line: 5, description: "Generate random 256-bit AES session key" },
-    { line: 6, description: "RSA-encrypt session key with recipient's public key" },
-    { line: 7, description: "AES-encrypt the actual message" },
-    { line: 8, description: "Bundle: encrypted key + encrypted message" },
-    { line: 13, description: "RSA-decrypt session key with private key" },
-    { line: 14, description: "AES-decrypt message with session key" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 13, highlightLines: [13] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: "Hello, secure world!",
   generateSteps(msg) {
@@ -656,9 +670,10 @@ def pgp_decrypt(ciphertext: str, passphrase: str) -> str:
 // ─── Kerberos ─────────────────────────────────────────────────────────────────
 export const kerberosModule: VisualizationModule<string> = {
   id: "kerberos", slug: "kerberos", title: "Kerberos Authentication",
-  category: "cryptography", difficulty: "Advanced",
+  category: ["cryptography"], difficulty: "advanced",
   timeComplexity: "O(1)", spaceComplexity: "O(1)",
   description: "Ticket-based authentication protocol using symmetric cryptography and trusted KDC.",
+  relatedTopics: [],
   pythonCode: `# Kerberos V5 authentication flow
 # Parties: Client (C), Auth Server (AS), Ticket Granting Server (TGS), Service (S)
 
@@ -677,11 +692,11 @@ export const kerberosModule: VisualizationModule<string> = {
 # Key property: no password ever sent over network
 # Tickets are time-limited (default 8 hours)`,
   codeSteps: [
-    { line: 5, description: "Client requests TGT from Auth Server" },
-    { line: 6, description: "AS returns TGT + session key encrypted with client's key" },
-    { line: 8, description: "Client uses TGT to request service ticket from TGS" },
-    { line: 10, description: "Client presents service ticket to actual service" },
-    { line: 14, description: "Password never sent on network — only encrypted tickets" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: "alice@REALM",
   generateSteps(principal) {

@@ -11,9 +11,10 @@ function sc(stepNumber: number, description: string, lines: number[], points: {x
 // ─── Linear Regression ───────────────────────────────────────────────────────
 export const linearRegressionModule: VisualizationModule<number[][]> = {
   id: "linear-regression", slug: "linear-regression", title: "Linear Regression",
-  category: "ml-ai", difficulty: "Beginner",
+  category: ["ml-ai"], difficulty: "beginner",
   timeComplexity: "O(n)", spaceComplexity: "O(1)",
   description: "Fits a line y = wx + b to data by minimizing mean squared error via gradient descent.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 def linear_regression(X, y, lr=0.01, epochs=100):
@@ -33,15 +34,15 @@ y = np.array([2,4,5,4,5], dtype=float)
 w, b = linear_regression(X, y)
 print(f"w={w:.3f}, b={b:.3f}")`,
   codeSteps: [
-    { line: 1, description: "Import numpy" },
-    { line: 3, description: "Define function with learning rate and epochs" },
-    { line: 4, description: "Initialize weights to zero" },
-    { line: 6, description: "Predict y_pred = wX + b" },
-    { line: 7, description: "Compute MSE loss" },
-    { line: 8, description: "Gradient w.r.t. w" },
-    { line: 9, description: "Gradient w.r.t. b" },
-    { line: 10, description: "Update w" },
-    { line: 11, description: "Update b" },
+    { stepNumber: 1, highlightLines: [1] },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 11, highlightLines: [11] },
   ],
   defaultInput: [[1,2],[2,4],[3,5],[4,4],[5,5]],
   generateSteps(data) {
@@ -67,9 +68,10 @@ print(f"w={w:.3f}, b={b:.3f}")`,
 // ─── Logistic Regression ─────────────────────────────────────────────────────
 export const logisticRegressionModule: VisualizationModule<number[][]> = {
   id: "logistic-regression", slug: "logistic-regression", title: "Logistic Regression",
-  category: "ml-ai", difficulty: "Beginner",
+  category: ["ml-ai"], difficulty: "beginner",
   timeComplexity: "O(n·epochs)", spaceComplexity: "O(1)",
   description: "Binary classifier using sigmoid activation and cross-entropy loss.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 def sigmoid(z): return 1 / (1 + np.exp(-z))
@@ -87,13 +89,13 @@ def logistic_regression(X, y, lr=0.1, epochs=100):
         b -= lr * db
     return w, b`,
   codeSteps: [
-    { line: 3, description: "Sigmoid maps any value to (0,1)" },
-    { line: 6, description: "Initialize weights" },
-    { line: 8, description: "Linear combination z = Xw + b" },
-    { line: 9, description: "Apply sigmoid to get probabilities" },
-    { line: 10, description: "Cross-entropy loss" },
-    { line: 11, description: "Gradients" },
-    { line: 13, description: "Update parameters" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 13, highlightLines: [13] },
   ],
   defaultInput: [[0.5,0,0],[1.5,0,1],[2.5,1,1],[3.5,1,1],[0.2,0,0]],
   generateSteps(data) {
@@ -111,9 +113,10 @@ def logistic_regression(X, y, lr=0.1, epochs=100):
 // ─── Decision Tree (ML) ───────────────────────────────────────────────────────
 export const decisionTreeMlModule: VisualizationModule<number[][]> = {
   id: "decision-tree-ml", slug: "decision-tree-ml", title: "Decision Tree",
-  category: "ml-ai", difficulty: "Intermediate",
+  category: ["ml-ai"], difficulty: "intermediate",
   timeComplexity: "O(n·m·log n)", spaceComplexity: "O(n)",
   description: "Recursive partitioning using information gain (entropy) or Gini impurity.",
+  relatedTopics: [],
   pythonCode: `import math
 
 def entropy(labels):
@@ -136,11 +139,11 @@ def best_split(X, y):
                 best_gain, best_feat, best_thresh = gain, feat, t
     return best_feat, best_thresh, best_gain`,
   codeSteps: [
-    { line: 3, description: "Compute entropy of label distribution" },
-    { line: 8, description: "Try every feature and threshold" },
-    { line: 11, description: "Split data into left/right" },
-    { line: 13, description: "Information gain = parent entropy - weighted child entropy" },
-    { line: 15, description: "Track best split" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 13, highlightLines: [13] },
+    { stepNumber: 15, highlightLines: [15] },
   ],
   defaultInput: [[2,3,0],[5,7,1],[1,1,0],[8,5,1],[4,6,1],[3,2,0]],
   generateSteps(data) {
@@ -158,9 +161,10 @@ def best_split(X, y):
 // ─── Random Forest ────────────────────────────────────────────────────────────
 export const randomForestModule: VisualizationModule<number> = {
   id: "random-forest", slug: "random-forest", title: "Random Forest",
-  category: "ml-ai", difficulty: "Intermediate",
+  category: ["ml-ai"], difficulty: "intermediate",
   timeComplexity: "O(n·T·m·log n)", spaceComplexity: "O(T·n)",
   description: "Ensemble of decision trees trained on bootstrap samples with feature bagging.",
+  relatedTopics: [],
   pythonCode: `import random, math
 
 def bootstrap(X, y):
@@ -180,10 +184,10 @@ for t in range(T):
     tree.fit(Xb, yb)
     trees.append(tree)`,
   codeSteps: [
-    { line: 3, description: "Bootstrap: sample n points with replacement" },
-    { line: 8, description: "Predict: majority vote across all trees" },
-    { line: 12, description: "Train T trees on different bootstraps" },
-    { line: 14, description: "Each tree uses random feature subset" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: 5,
   generateSteps(T) {
@@ -201,9 +205,10 @@ for t in range(T):
 // ─── SVM ─────────────────────────────────────────────────────────────────────
 export const svmModule: VisualizationModule<number[][]> = {
   id: "svm", slug: "svm", title: "Support Vector Machine",
-  category: "ml-ai", difficulty: "Advanced",
+  category: ["ml-ai"], difficulty: "advanced",
   timeComplexity: "O(n²) to O(n³)", spaceComplexity: "O(n)",
   description: "Finds the maximum-margin hyperplane between classes using support vectors.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 def svm_kernel(x1, x2, kernel='linear'):
@@ -221,10 +226,10 @@ def predict(x, support_vecs, alphas, ys, b):
         for i in range(len(support_vecs))
     ) + b)`,
   codeSteps: [
-    { line: 3, description: "Kernel computes inner products in feature space" },
-    { line: 7, description: "Dual: maximize sum of alphas minus quadratic term" },
-    { line: 10, description: "Support vectors: points with non-zero alpha" },
-    { line: 12, description: "Predict: sign of weighted kernel sum" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 12, highlightLines: [12] },
   ],
   defaultInput: [[1,1,0],[1.5,2,0],[3,3,1],[3.5,2,1],[2,1.5,0],[2.5,3.5,1]],
   generateSteps(data) {
@@ -242,9 +247,10 @@ def predict(x, support_vecs, alphas, ys, b):
 // ─── KNN ─────────────────────────────────────────────────────────────────────
 export const knnModule: VisualizationModule<{k:number,query:[number,number]}> = {
   id: "knn", slug: "knn", title: "K-Nearest Neighbors",
-  category: "ml-ai", difficulty: "Beginner",
+  category: ["ml-ai"], difficulty: "beginner",
   timeComplexity: "O(n·d)", spaceComplexity: "O(n)",
   description: "Classifies by majority vote among the K closest training examples.",
+  relatedTopics: [],
   pythonCode: `import heapq, math
 
 def euclidean(a, b):
@@ -258,11 +264,11 @@ def knn_classify(X_train, y_train, query, k):
         votes[label] = votes.get(label, 0) + 1
     return max(votes, key=votes.get)`,
   codeSteps: [
-    { line: 3, description: "Euclidean distance between two points" },
-    { line: 6, description: "Compute distance from query to all training points" },
-    { line: 7, description: "Select K smallest distances" },
-    { line: 8, description: "Count votes per class" },
-    { line: 11, description: "Return majority class" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 11, highlightLines: [11] },
   ],
   defaultInput: {k:3, query:[3,3]},
   generateSteps({k, query}) {
@@ -283,9 +289,10 @@ def knn_classify(X_train, y_train, query, k):
 // ─── Naive Bayes ──────────────────────────────────────────────────────────────
 export const naiveBayesModule: VisualizationModule<string[]> = {
   id: "naive-bayes", slug: "naive-bayes", title: "Naive Bayes",
-  category: "ml-ai", difficulty: "Beginner",
+  category: ["ml-ai"], difficulty: "beginner",
   timeComplexity: "O(n·d)", spaceComplexity: "O(d·C)",
   description: "Probabilistic classifier using Bayes theorem with feature independence assumption.",
+  relatedTopics: [],
   pythonCode: `from collections import defaultdict
 
 def train_naive_bayes(docs, labels):
@@ -309,11 +316,11 @@ def predict(doc, class_counts, word_counts, vocab):
         scores[cls] = score
     return max(scores, key=scores.get)`,
   codeSteps: [
-    { line: 3, description: "Count documents per class" },
-    { line: 5, description: "Count word occurrences per class" },
-    { line: 14, description: "Prior: P(class) = class_count / total" },
-    { line: 15, description: "Likelihood with Laplace smoothing" },
-    { line: 19, description: "Return class with highest posterior" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 15, highlightLines: [15] },
+    { stepNumber: 19, highlightLines: [19] },
   ],
   defaultInput: ["good great excellent","bad terrible awful","good bad mediocre"],
   generateSteps(docs) {
@@ -332,9 +339,10 @@ def predict(doc, class_counts, word_counts, vocab):
 // ─── Perceptron ───────────────────────────────────────────────────────────────
 export const perceptronModule: VisualizationModule<number[][]> = {
   id: "perceptron", slug: "perceptron", title: "Perceptron",
-  category: "ml-ai", difficulty: "Beginner",
+  category: ["ml-ai"], difficulty: "beginner",
   timeComplexity: "O(n·epochs)", spaceComplexity: "O(d)",
   description: "Single-layer linear classifier; the building block of neural networks.",
+  relatedTopics: [],
   pythonCode: `def perceptron_train(X, y, lr=0.1, epochs=10):
     w = [0.0] * len(X[0])
     b = 0.0
@@ -348,12 +356,12 @@ export const perceptronModule: VisualizationModule<number[][]> = {
             b += lr * err
     return w, b`,
   codeSteps: [
-    { line: 2, description: "Initialize weights to zero" },
-    { line: 5, description: "For each training example" },
-    { line: 6, description: "Compute linear activation z = w·x + b" },
-    { line: 7, description: "Step function: predict 1 if z≥0 else 0" },
-    { line: 8, description: "Error = true - predicted" },
-    { line: 9, description: "Update weights proportional to error" },
+    { stepNumber: 2, highlightLines: [2] },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 9, highlightLines: [9] },
   ],
   defaultInput: [[0,0,0],[0,1,1],[1,0,1],[1,1,1]],
   generateSteps(data) {
@@ -370,9 +378,10 @@ export const perceptronModule: VisualizationModule<number[][]> = {
 // ─── MLP Forward Pass ─────────────────────────────────────────────────────────
 export const mlpForwardModule: VisualizationModule<number[]> = {
   id: "mlp-forward", slug: "mlp-forward", title: "MLP Forward Pass",
-  category: "ml-ai", difficulty: "Intermediate",
+  category: ["ml-ai"], difficulty: "intermediate",
   timeComplexity: "O(L·d²)", spaceComplexity: "O(L·d)",
   description: "Multi-layer perceptron: compute activations layer by layer.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 def relu(z): return np.maximum(0, z)
@@ -391,12 +400,12 @@ def mlp_forward(X, weights, biases):
     activations.append(a)
     return activations`,
   codeSteps: [
-    { line: 3, description: "ReLU: max(0, z)" },
-    { line: 4, description: "Softmax for multi-class output" },
-    { line: 7, description: "Input layer = X" },
-    { line: 9, description: "Linear combination z = aW + b" },
-    { line: 10, description: "Apply ReLU activation" },
-    { line: 13, description: "Output layer with softmax" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 13, highlightLines: [13] },
   ],
   defaultInput: [0.5, 0.8, 0.2],
   generateSteps(x) {
@@ -419,9 +428,10 @@ def mlp_forward(X, weights, biases):
 // ─── Backpropagation ──────────────────────────────────────────────────────────
 export const backpropagationModule: VisualizationModule<number[]> = {
   id: "backpropagation", slug: "backpropagation", title: "Backpropagation",
-  category: "ml-ai", difficulty: "Advanced",
+  category: ["ml-ai"], difficulty: "advanced",
   timeComplexity: "O(L·d²)", spaceComplexity: "O(L·d)",
   description: "Compute gradients via chain rule, propagating error from output to input.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 def backprop(activations, weights, y_true, lr=0.01):
@@ -437,10 +447,10 @@ def backprop(activations, weights, y_true, lr=0.01):
         weights[l] -= lr * activations[l].T @ deltas[l]
     return weights`,
   codeSteps: [
-    { line: 6, description: "Output error: predicted - true" },
-    { line: 8, description: "Chain rule: propagate delta backwards" },
-    { line: 9, description: "Multiply by derivative of activation (ReLU grad)" },
-    { line: 11, description: "Update: W -= lr * a^T · delta" },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 11, highlightLines: [11] },
   ],
   defaultInput: [0.8, 0.1, 0.1],
   generateSteps(yTrue) {
@@ -460,9 +470,10 @@ def backprop(activations, weights, y_true, lr=0.01):
 // ─── CNN ──────────────────────────────────────────────────────────────────────
 export const cnnModule: VisualizationModule<number[][]> = {
   id: "cnn", slug: "cnn", title: "Convolutional Neural Network",
-  category: "ml-ai", difficulty: "Advanced",
+  category: ["ml-ai"], difficulty: "advanced",
   timeComplexity: "O(n·k²·c_in·c_out)", spaceComplexity: "O(n·c)",
   description: "Applies learnable filters (convolutions) to extract spatial features.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 def conv2d(input, kernel, stride=1, pad=0):
@@ -485,10 +496,10 @@ def max_pool(feature_map, size=2):
             out[i//size, j//size] = feature_map[i:i+size, j:j+size].max()
     return out`,
   codeSteps: [
-    { line: 3, description: "conv2d: slide kernel over input" },
-    { line: 6, description: "Compute output dimensions" },
-    { line: 9, description: "Extract local region and dot with kernel" },
-    { line: 14, description: "Max pooling: take max in each window" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: [[1,0,1,0],[0,1,0,1],[1,0,1,0],[0,1,0,1]],
   generateSteps(img) {
@@ -508,9 +519,10 @@ def max_pool(feature_map, size=2):
 // ─── RNN ──────────────────────────────────────────────────────────────────────
 export const rnnModule: VisualizationModule<number[]> = {
   id: "rnn", slug: "rnn", title: "Recurrent Neural Network",
-  category: "ml-ai", difficulty: "Advanced",
+  category: ["ml-ai"], difficulty: "advanced",
   timeComplexity: "O(T·d²)", spaceComplexity: "O(d)",
   description: "Processes sequences by maintaining a hidden state across time steps.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 def tanh(z): return np.tanh(z)
@@ -530,10 +542,10 @@ def rnn_forward(X, h0, W_xh, W_hh, b_h, W_hy, b_y):
         outputs.append(y)
     return outputs, h`,
   codeSteps: [
-    { line: 3, description: "tanh activation for hidden state" },
-    { line: 6, description: "h_t = tanh(W_xh·x_t + W_hh·h_{t-1} + b)" },
-    { line: 8, description: "Output y_t = W_hy·h_t + b_y" },
-    { line: 14, description: "Loop over each time step" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: [0.2, 0.5, -0.3, 0.8, 0.1],
   generateSteps(seq) {
@@ -554,9 +566,10 @@ def rnn_forward(X, h0, W_xh, W_hh, b_h, W_hy, b_y):
 // ─── LSTM ─────────────────────────────────────────────────────────────────────
 export const lstmModule: VisualizationModule<number[]> = {
   id: "lstm", slug: "lstm", title: "LSTM",
-  category: "ml-ai", difficulty: "Advanced",
+  category: ["ml-ai"], difficulty: "advanced",
   timeComplexity: "O(T·d²)", spaceComplexity: "O(d)",
   description: "Long Short-Term Memory: gates control what to remember and forget.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 def sigmoid(z): return 1/(1+np.exp(-z))
@@ -572,13 +585,13 @@ def lstm_step(x, h_prev, c_prev, params):
     h = o * np.tanh(c)                  # hidden state
     return h, c`,
   codeSteps: [
-    { line: 7, description: "Concatenate previous h and current x" },
-    { line: 8, description: "Forget gate: what to erase from cell" },
-    { line: 9, description: "Input gate: what new info to store" },
-    { line: 10, description: "Candidate cell values" },
-    { line: 11, description: "Output gate: what to expose" },
-    { line: 12, description: "Cell state: forget old + add new" },
-    { line: 13, description: "Hidden state: gated cell output" },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 13, highlightLines: [13] },
   ],
   defaultInput: [0.3, -0.2, 0.7, 0.1],
   generateSteps(seq) {
@@ -604,9 +617,10 @@ def lstm_step(x, h_prev, c_prev, params):
 // ─── K-Means ──────────────────────────────────────────────────────────────────
 export const kmeansModule: VisualizationModule<{k:number,points:number[][]}> = {
   id: "kmeans", slug: "kmeans", title: "K-Means Clustering",
-  category: "ml-ai", difficulty: "Intermediate",
+  category: ["ml-ai"], difficulty: "intermediate",
   timeComplexity: "O(n·k·iterations)", spaceComplexity: "O(n+k)",
   description: "Partition n points into k clusters by iteratively updating centroids.",
+  relatedTopics: [],
   pythonCode: `import random, math
 
 def euclidean(a, b):
@@ -629,11 +643,11 @@ def kmeans(points, k, max_iter=100):
         centroids = new_centroids
     return clusters, centroids`,
   codeSteps: [
-    { line: 7, description: "Initialize centroids randomly" },
-    { line: 9, description: "Assign each point to nearest centroid" },
-    { line: 11, description: "Compute distances and find nearest" },
-    { line: 14, description: "Recompute centroids as cluster means" },
-    { line: 19, description: "Stop if centroids unchanged" },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 19, highlightLines: [19] },
   ],
   defaultInput: {k:2, points:[[1,2],[1.5,1.8],[5,8],[8,8],[1,0.6],[9,11]]},
   generateSteps({k, points}) {
@@ -661,9 +675,10 @@ def kmeans(points, k, max_iter=100):
 // ─── DBSCAN ───────────────────────────────────────────────────────────────────
 export const dbscanModule: VisualizationModule<{eps:number,minPts:number}> = {
   id: "dbscan", slug: "dbscan", title: "DBSCAN",
-  category: "ml-ai", difficulty: "Intermediate",
+  category: ["ml-ai"], difficulty: "intermediate",
   timeComplexity: "O(n²)", spaceComplexity: "O(n)",
   description: "Density-based clustering that finds arbitrarily shaped clusters and marks outliers.",
+  relatedTopics: [],
   pythonCode: `def dbscan(points, eps, min_pts):
     labels = [-1] * len(points)  # -1 = unvisited
     cluster_id = 0
@@ -686,11 +701,11 @@ export const dbscanModule: VisualizationModule<{eps:number,minPts:number}> = {
                     seed_set.extend(q_neighbors)
     return labels`,
   codeSteps: [
-    { line: 2, description: "Initialize all points as unvisited" },
-    { line: 5, description: "Find neighbors within eps radius" },
-    { line: 7, description: "Too few neighbors → noise point" },
-    { line: 10, description: "Start new cluster from core point" },
-    { line: 12, description: "Expand cluster via seed set" },
+    { stepNumber: 2, highlightLines: [2] },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 12, highlightLines: [12] },
   ],
   defaultInput: {eps:1.5, minPts:2},
   generateSteps({eps, minPts}) {
@@ -708,9 +723,10 @@ export const dbscanModule: VisualizationModule<{eps:number,minPts:number}> = {
 // ─── Hierarchical Clustering ──────────────────────────────────────────────────
 export const hierarchicalClusteringModule: VisualizationModule<number[][]> = {
   id: "hierarchical-clustering", slug: "hierarchical-clustering", title: "Hierarchical Clustering",
-  category: "ml-ai", difficulty: "Intermediate",
+  category: ["ml-ai"], difficulty: "intermediate",
   timeComplexity: "O(n³)", spaceComplexity: "O(n²)",
   description: "Agglomerative bottom-up clustering — merge closest clusters iteratively.",
+  relatedTopics: [],
   pythonCode: `def agglomerative(points, linkage='single'):
     clusters = [[i] for i in range(len(points))]
     history = []
@@ -728,11 +744,11 @@ export const hierarchicalClusteringModule: VisualizationModule<number[][]> = {
                     if k != merge_a and k != merge_b] + [new_cluster]
     return history`,
   codeSteps: [
-    { line: 2, description: "Start: each point is its own cluster" },
-    { line: 4, description: "Repeat until one cluster remains" },
-    { line: 8, description: "Find pair of clusters with minimum distance" },
-    { line: 11, description: "Merge the two closest clusters" },
-    { line: 12, description: "Record merge history (for dendrogram)" },
+    { stepNumber: 2, highlightLines: [2] },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 12, highlightLines: [12] },
   ],
   defaultInput: [[1,2],[1.5,1.8],[5,8],[8,8],[1,0.6]],
   generateSteps(points) {
@@ -750,9 +766,10 @@ export const hierarchicalClusteringModule: VisualizationModule<number[][]> = {
 // ─── PCA ─────────────────────────────────────────────────────────────────────
 export const pcaModule: VisualizationModule<number[][]> = {
   id: "pca", slug: "pca", title: "Principal Component Analysis",
-  category: "ml-ai", difficulty: "Advanced",
+  category: ["ml-ai"], difficulty: "advanced",
   timeComplexity: "O(n·d² + d³)", spaceComplexity: "O(d²)",
   description: "Reduces dimensionality by projecting onto directions of maximum variance.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 def pca(X, n_components):
@@ -771,11 +788,11 @@ def pca(X, n_components):
     X_reduced = X_c @ W
     return X_reduced, W`,
   codeSteps: [
-    { line: 4, description: "Center data: subtract mean" },
-    { line: 6, description: "Covariance matrix captures variance structure" },
-    { line: 8, description: "Eigenvectors = principal components" },
-    { line: 10, description: "Sort by eigenvalue (most variance first)" },
-    { line: 12, description: "Project data onto top k components" },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 12, highlightLines: [12] },
   ],
   defaultInput: [[2.5,2.4],[0.5,0.7],[2.2,2.9],[1.9,2.2],[3.1,3.0],[2.3,2.7]],
   generateSteps(data) {
@@ -797,9 +814,10 @@ def pca(X, n_components):
 // ─── Autoencoders ────────────────────────────────────────────────────────────
 export const autoencodersModule: VisualizationModule<number[]> = {
   id: "autoencoders", slug: "autoencoders", title: "Autoencoders",
-  category: "ml-ai", difficulty: "Advanced",
+  category: ["ml-ai"], difficulty: "advanced",
   timeComplexity: "O(epochs·n·d²)", spaceComplexity: "O(d)",
   description: "Encoder-decoder network that learns compressed latent representations.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 def relu(z): return np.maximum(0, z)
@@ -816,11 +834,11 @@ class Autoencoder:
     def loss(self, x):
         return np.mean((x - self.decode(self.encode(x)))**2)`,
   codeSteps: [
-    { line: 6, description: "Encoder: compress to hidden representation" },
-    { line: 7, description: "Latent space: bottleneck layer" },
-    { line: 10, description: "Decoder: expand from latent" },
-    { line: 11, description: "Reconstruct original input" },
-    { line: 13, description: "MSE reconstruction loss" },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 13, highlightLines: [13] },
   ],
   defaultInput: [0.8, 0.2, 0.9, 0.1, 0.7],
   generateSteps(x) {
@@ -843,9 +861,10 @@ class Autoencoder:
 // ─── Gradient Descent ─────────────────────────────────────────────────────────
 export const gradientDescentModule: VisualizationModule<{lr:number,steps:number}> = {
   id: "gradient-descent", slug: "gradient-descent", title: "Gradient Descent",
-  category: "ml-ai", difficulty: "Beginner",
+  category: ["ml-ai"], difficulty: "beginner",
   timeComplexity: "O(steps)", spaceComplexity: "O(1)",
   description: "Iteratively update parameters in the negative gradient direction to minimize loss.",
+  relatedTopics: [],
   pythonCode: `def gradient_descent(f, grad_f, x0, lr=0.1, steps=50):
     x = x0
     history = [x]
@@ -860,10 +879,10 @@ f      = lambda x: x**2
 grad_f = lambda x: 2*x
 x_opt, hist = gradient_descent(f, grad_f, x0=4.0, lr=0.2)`,
   codeSteps: [
-    { line: 5, description: "Compute gradient of loss w.r.t. x" },
-    { line: 6, description: "Step: x = x - lr * gradient" },
-    { line: 10, description: "f(x)=x² has gradient 2x" },
-    { line: 12, description: "Starting at x=4, converge to x=0" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 12, highlightLines: [12] },
   ],
   defaultInput: {lr: 0.2, steps: 6},
   generateSteps({lr, steps}) {
@@ -882,9 +901,10 @@ x_opt, hist = gradient_descent(f, grad_f, x0=4.0, lr=0.2)`,
 // ─── SGD ──────────────────────────────────────────────────────────────────────
 export const sgdModule: VisualizationModule<{lr:number,batchSize:number}> = {
   id: "sgd", slug: "sgd", title: "Stochastic Gradient Descent",
-  category: "ml-ai", difficulty: "Beginner",
+  category: ["ml-ai"], difficulty: "beginner",
   timeComplexity: "O(epochs·n/b)", spaceComplexity: "O(b)",
   description: "Uses random mini-batches to estimate gradients — faster and noisier than full GD.",
+  relatedTopics: [],
   pythonCode: `import random
 
 def sgd(X, y, w, lr=0.01, batch_size=32, epochs=10):
@@ -900,10 +920,10 @@ def sgd(X, y, w, lr=0.01, batch_size=32, epochs=10):
             w = w - lr * grad                      # update
     return w`,
   codeSteps: [
-    { line: 6, description: "Shuffle data each epoch" },
-    { line: 8, description: "Take a mini-batch of size b" },
-    { line: 11, description: "Estimate gradient on mini-batch" },
-    { line: 12, description: "Update weights with noisy gradient" },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 12, highlightLines: [12] },
   ],
   defaultInput: {lr: 0.01, batchSize: 2},
   generateSteps({lr, batchSize}) {
@@ -922,9 +942,10 @@ def sgd(X, y, w, lr=0.01, batch_size=32, epochs=10):
 // ─── Adam Optimizer ───────────────────────────────────────────────────────────
 export const adamOptimizerModule: VisualizationModule<{lr:number,beta1:number,beta2:number}> = {
   id: "adam-optimizer", slug: "adam-optimizer", title: "Adam Optimizer",
-  category: "ml-ai", difficulty: "Intermediate",
+  category: ["ml-ai"], difficulty: "intermediate",
   timeComplexity: "O(steps)", spaceComplexity: "O(d)",
   description: "Adaptive moment estimation: combines momentum and RMSProp.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 def adam(grad_fn, theta, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8, steps=1000):
@@ -939,12 +960,12 @@ def adam(grad_fn, theta, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8, steps=1000)
         theta -= lr * m_hat / (np.sqrt(v_hat) + eps)
     return theta`,
   codeSteps: [
-    { line: 4, description: "m: exponential moving average of gradients" },
-    { line: 5, description: "v: exponential moving average of squared gradients" },
-    { line: 7, description: "Compute gradient" },
-    { line: 8, description: "Update moment estimates" },
-    { line: 10, description: "Bias-correct early steps" },
-    { line: 12, description: "Adaptive update: lr / sqrt(v)" },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 12, highlightLines: [12] },
   ],
   defaultInput: {lr:0.001, beta1:0.9, beta2:0.999},
   generateSteps({lr, beta1, beta2}) {
@@ -969,9 +990,10 @@ def adam(grad_fn, theta, lr=0.001, beta1=0.9, beta2=0.999, eps=1e-8, steps=1000)
 // ─── RMSProp ──────────────────────────────────────────────────────────────────
 export const rmspropModule: VisualizationModule<{lr:number,decay:number}> = {
   id: "rmsprop", slug: "rmsprop", title: "RMSProp",
-  category: "ml-ai", difficulty: "Intermediate",
+  category: ["ml-ai"], difficulty: "intermediate",
   timeComplexity: "O(steps)", spaceComplexity: "O(d)",
   description: "Adapts learning rate by dividing by a running average of squared gradients.",
+  relatedTopics: [],
   pythonCode: `def rmsprop(grad_fn, theta, lr=0.001, decay=0.9, eps=1e-8, steps=100):
     v = 0.0  # running mean of squared gradients
     for t in range(steps):
@@ -980,10 +1002,10 @@ export const rmspropModule: VisualizationModule<{lr:number,decay:number}> = {
         theta -= lr * g / (v**0.5 + eps)   # adaptive step
     return theta`,
   codeSteps: [
-    { line: 2, description: "v: running mean of squared gradients" },
-    { line: 4, description: "Compute gradient" },
-    { line: 5, description: "Exponential moving average of g²" },
-    { line: 6, description: "Normalize gradient by sqrt(v)" },
+    { stepNumber: 2, highlightLines: [2] },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 6, highlightLines: [6] },
   ],
   defaultInput: {lr: 0.001, decay: 0.9},
   generateSteps({lr, decay}) {
@@ -1005,9 +1027,10 @@ export const rmspropModule: VisualizationModule<{lr:number,decay:number}> = {
 // ─── Transformer Attention ────────────────────────────────────────────────────
 export const transformerAttentionModule: VisualizationModule<string[]> = {
   id: "transformer-attention", slug: "transformer-attention", title: "Transformer Attention",
-  category: "ml-ai", difficulty: "Advanced",
+  category: ["ml-ai"], difficulty: "advanced",
   timeComplexity: "O(n²·d)", spaceComplexity: "O(n²)",
   description: "Scaled dot-product attention: Q·Kᵀ/√d → softmax → ·V",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 def scaled_dot_product_attention(Q, K, V, mask=None):
@@ -1026,11 +1049,11 @@ def multi_head_attention(Q, K, V, h=8):
     heads = [attention(Q_i, K_i, V_i) for Q_i,K_i,V_i in split_heads(Q,K,V,h)]
     return concat(heads) @ W_o`,
   codeSteps: [
-    { line: 5, description: "Attention scores = Q·Kᵀ / √d_k" },
-    { line: 6, description: "Optional causal mask (decoder)" },
-    { line: 7, description: "Softmax → attention weights (sum to 1)" },
-    { line: 8, description: "Weighted sum of values" },
-    { line: 12, description: "Multi-head: h parallel attention streams" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 12, highlightLines: [12] },
   ],
   defaultInput: ["The","cat","sat","on","mat"],
   generateSteps(tokens) {
@@ -1050,9 +1073,10 @@ def multi_head_attention(Q, K, V, h=8):
 // ─── RAG Pipeline ─────────────────────────────────────────────────────────────
 export const ragPipelineModule: VisualizationModule<string> = {
   id: "rag-pipeline", slug: "rag-pipeline", title: "RAG Pipeline",
-  category: "ml-ai", difficulty: "Intermediate",
+  category: ["ml-ai"], difficulty: "intermediate",
   timeComplexity: "O(n·d + k·d)", spaceComplexity: "O(n·d)",
   description: "Retrieval-Augmented Generation: retrieve relevant docs, then generate conditioned answer.",
+  relatedTopics: [],
   pythonCode: `from sentence_transformers import SentenceTransformer
 import faiss, numpy as np
 
@@ -1070,12 +1094,12 @@ def rag_query(question, k=3):
     answer = llm.generate(prompt)            # augmented generation
     return answer`,
   codeSteps: [
-    { line: 5, description: "Embed all corpus documents" },
-    { line: 6, description: "Build FAISS index for fast ANN search" },
-    { line: 10, description: "Embed the user query" },
-    { line: 11, description: "Retrieve top-k similar documents" },
-    { line: 12, description: "Build prompt with retrieved context" },
-    { line: 14, description: "LLM generates answer conditioned on context" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: "What is attention mechanism?",
   generateSteps(query) {
@@ -1094,9 +1118,10 @@ def rag_query(question, k=3):
 // ─── Vector Embeddings ────────────────────────────────────────────────────────
 export const vectorEmbeddingsModule: VisualizationModule<string[]> = {
   id: "vector-embeddings", slug: "vector-embeddings", title: "Vector Embeddings",
-  category: "ml-ai", difficulty: "Beginner",
+  category: ["ml-ai"], difficulty: "beginner",
   timeComplexity: "O(n·d)", spaceComplexity: "O(n·d)",
   description: "Map discrete tokens to dense vectors capturing semantic similarity.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 # Embedding lookup table: vocab_size × d_model
@@ -1115,11 +1140,11 @@ def skip_gram_loss(center, context, negatives, E):
     neg = sum(np.dot(E[center], E[n]) for n in negatives)
     return -np.log(sigmoid(pos)) - sum(np.log(sigmoid(-neg_s)) for neg_s in [neg])`,
   codeSteps: [
-    { line: 3, description: "Embedding matrix E of shape (V, d)" },
-    { line: 6, description: "Lookup: embed[id] = row of E" },
-    { line: 9, description: "Cosine similarity measures semantic closeness" },
-    { line: 12, description: "Skip-gram: predict context from center word" },
-    { line: 13, description: "Positive + negative samples for training" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 13, highlightLines: [13] },
   ],
   defaultInput: ["king","queen","man","woman","Paris","France"],
   generateSteps(words) {
@@ -1136,9 +1161,10 @@ def skip_gram_loss(center, context, negatives, E):
 // ─── Beam Search ──────────────────────────────────────────────────────────────
 export const beamSearchModule: VisualizationModule<{beamWidth:number,vocab:string[]}> = {
   id: "beam-search", slug: "beam-search", title: "Beam Search",
-  category: "ml-ai", difficulty: "Intermediate",
+  category: ["ml-ai"], difficulty: "intermediate",
   timeComplexity: "O(T·B·V)", spaceComplexity: "O(B·T)",
   description: "Decoding strategy that keeps top-B candidates at each step instead of greedy argmax.",
+  relatedTopics: [],
   pythonCode: `import heapq
 
 def beam_search(model, start_token, beam_width, max_len, vocab):
@@ -1153,11 +1179,11 @@ def beam_search(model, start_token, beam_width, max_len, vocab):
         beams = heapq.nlargest(beam_width, candidates, key=lambda x: x[1])
     return beams[0][0]  # best sequence`,
   codeSteps: [
-    { line: 3, description: "Initialize beams with start token" },
-    { line: 5, description: "Expand each beam with all vocabulary tokens" },
-    { line: 7, description: "Score = cumulative log probability" },
-    { line: 10, description: "Prune: keep top beam_width candidates" },
-    { line: 12, description: "Return highest-scoring complete sequence" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 12, highlightLines: [12] },
   ],
   defaultInput: {beamWidth: 2, vocab: ["<s>","the","cat","sat","dog","ran"]},
   generateSteps({beamWidth, vocab}) {
@@ -1175,9 +1201,10 @@ def beam_search(model, start_token, beam_width, max_len, vocab):
 // ─── MCTS ─────────────────────────────────────────────────────────────────────
 export const mctsAiModule: VisualizationModule<number> = {
   id: "mcts-ai", slug: "mcts-ai", title: "Monte Carlo Tree Search",
-  category: "ml-ai", difficulty: "Advanced",
+  category: ["ml-ai"], difficulty: "advanced",
   timeComplexity: "O(simulations · depth)", spaceComplexity: "O(nodes)",
   description: "Four phases: selection (UCT), expansion, simulation (rollout), backpropagation.",
+  relatedTopics: [],
   pythonCode: `import math, random
 
 C = math.sqrt(2)  # exploration constant
@@ -1203,11 +1230,11 @@ def mcts(root, n_simulations):
             node.wins += result
             node = node.parent`,
   codeSteps: [
-    { line: 5, description: "UCT balances exploration and exploitation" },
-    { line: 9, description: "Selection: traverse tree using UCT" },
-    { line: 12, description: "Expansion: add new child node" },
-    { line: 14, description: "Simulation: random rollout to terminal" },
-    { line: 16, description: "Backprop: update wins/visits up the tree" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 16, highlightLines: [16] },
   ],
   defaultInput: 4,
   generateSteps(simulations) {
@@ -1228,9 +1255,10 @@ def mcts(root, n_simulations):
 // ─── Q-Learning ───────────────────────────────────────────────────────────────
 export const qLearningModule: VisualizationModule<{states:number,actions:number}> = {
   id: "q-learning", slug: "q-learning", title: "Q-Learning",
-  category: "ml-ai", difficulty: "Advanced",
+  category: ["ml-ai"], difficulty: "advanced",
   timeComplexity: "O(episodes·steps)", spaceComplexity: "O(S·A)",
   description: "Model-free RL: learn Q(s,a) table via Bellman equation updates.",
+  relatedTopics: [],
   pythonCode: `import random
 
 def q_learning(env, episodes, alpha=0.1, gamma=0.99, epsilon=0.1):
@@ -1252,11 +1280,11 @@ def q_learning(env, episodes, alpha=0.1, gamma=0.99, epsilon=0.1):
             state = next_state
     return Q`,
   codeSteps: [
-    { line: 4, description: "Q-table maps (state, action) → expected return" },
-    { line: 9, description: "ε-greedy: explore randomly with prob ε" },
-    { line: 11, description: "Exploit: choose action with max Q-value" },
-    { line: 14, description: "Observe reward and next state" },
-    { line: 16, description: "Bellman update: Q += α(r + γ·max_Q' - Q)" },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 16, highlightLines: [16] },
   ],
   defaultInput: {states: 4, actions: 2},
   generateSteps({states, actions}) {
@@ -1276,9 +1304,10 @@ def q_learning(env, episodes, alpha=0.1, gamma=0.99, epsilon=0.1):
 // ─── Policy Gradient ──────────────────────────────────────────────────────────
 export const policyGradientModule: VisualizationModule<number> = {
   id: "policy-gradient", slug: "policy-gradient", title: "Policy Gradient (REINFORCE)",
-  category: "ml-ai", difficulty: "Advanced",
+  category: ["ml-ai"], difficulty: "advanced",
   timeComplexity: "O(episodes·T)", spaceComplexity: "O(T)",
   description: "Directly optimize policy π_θ by ascending the expected return gradient.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 def reinforce(policy_net, env, lr=0.01, episodes=1000, gamma=0.99):
@@ -1301,10 +1330,10 @@ def reinforce(policy_net, env, lr=0.01, episodes=1000, gamma=0.99):
         loss = -sum(log_prob(s,a) * G for s,a,G in zip(states,actions,returns))
         optimizer.zero_grad(); loss.backward(); optimizer.step()`,
   codeSteps: [
-    { line: 9, description: "Sample action from stochastic policy π_θ" },
-    { line: 14, description: "Compute discounted return G_t" },
-    { line: 18, description: "Loss = -Σ log π(a|s) · G_t" },
-    { line: 19, description: "Gradient ascent on expected return" },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 18, highlightLines: [18] },
+    { stepNumber: 19, highlightLines: [19] },
   ],
   defaultInput: 5,
   generateSteps(episodes) {
@@ -1325,9 +1354,10 @@ def reinforce(policy_net, env, lr=0.01, episodes=1000, gamma=0.99):
 // ─── DQN ──────────────────────────────────────────────────────────────────────
 export const dqnModule: VisualizationModule<number> = {
   id: "dqn", slug: "dqn", title: "Deep Q-Network (DQN)",
-  category: "ml-ai", difficulty: "Advanced",
+  category: ["ml-ai"], difficulty: "advanced",
   timeComplexity: "O(episodes·steps·d²)", spaceComplexity: "O(buffer+d²)",
   description: "Q-learning with neural network function approximation, replay buffer, and target network.",
+  relatedTopics: [],
   pythonCode: `import random
 from collections import deque
 
@@ -1352,12 +1382,12 @@ class DQN:
         if step % target_update == 0:
             target_net.load_state_dict(q_net.state_dict())`,
   codeSteps: [
-    { line: 7, description: "Two networks: online Q and lagging target Q" },
-    { line: 8, description: "Replay buffer: store (s,a,r,s',done) transitions" },
-    { line: 14, description: "TD target using frozen target network" },
-    { line: 16, description: "Online network predicts Q(s,a)" },
-    { line: 17, description: "MSE loss between predicted and target Q" },
-    { line: 20, description: "Sync target network periodically for stability" },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 16, highlightLines: [16] },
+    { stepNumber: 17, highlightLines: [17] },
+    { stepNumber: 20, highlightLines: [20] },
   ],
   defaultInput: 5,
   generateSteps(steps) {

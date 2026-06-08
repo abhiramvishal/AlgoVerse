@@ -7,9 +7,10 @@ function arr(stepNumber: number, description: string, lines: number[], cells: {v
 // ─── Parallel Merge Sort ──────────────────────────────────────────────────────
 export const parallelMergeSortModule: VisualizationModule<number[]> = {
   id: "parallel-merge-sort", slug: "parallel-merge-sort", title: "Parallel Merge Sort",
-  category: "parallel", difficulty: "Intermediate",
+  category: ["parallel"], difficulty: "intermediate",
   timeComplexity: "O(n log n / p + log²n)", spaceComplexity: "O(n)",
   description: "Recursively split array across p processors; each sorts its chunk then merge.",
+  relatedTopics: [],
   pythonCode: `from concurrent.futures import ThreadPoolExecutor
 import math
 
@@ -35,22 +36,22 @@ def k_way_merge(chunks):
             heapq.heappush(heap, (chunks[ci][idx+1], ci, idx+1))
     return result`,
   codeSteps: [
-    { line: 5, description: "Divide array into p chunks" },
-    { line: 8, description: "Sort each chunk in parallel (p threads)" },
-    { line: 11, description: "k-way merge of sorted chunks" },
-    { line: 14, description: "Min-heap to efficiently merge k sorted sequences" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: [8,3,1,7,5,2,9,4,6,0],
-  generateSteps(arr) {
-    const p=2, n=arr.length, cs=Math.ceil(n/p);
-    const chunks=Array.from({length:p},(_,i)=>arr.slice(i*cs,(i+1)*cs));
+  generateSteps(input) {
+    const p=2, n=input.length, cs=Math.ceil(n/p);
+    const chunks=Array.from({length:p},(_,i)=>input.slice(i*cs,(i+1)*cs));
     const steps: AnimationStep[] = [];
-    steps.push(arr(1,"Original array — split across "+p+" processors",[5,6],arr.map(v=>({val:v,state:"default" as string})),"Input",{p}));
+    steps.push(arr(1,"Original array — split across "+p+" processors",[5,6],input.map(v=>({val:v,state:"default" as string})),"Input",{p}));
     chunks.forEach((c,i)=>{
       const sorted=[...c].sort((a,b)=>a-b);
       steps.push(arr(i+2,`Thread ${i}: sort chunk [${c.join(",")}] → [${sorted.join(",")}]`,[8,9],sorted.map(v=>({val:v,state:"highlighted" as string})),`Thread ${i} (sorted)`,{chunk:i}));
     });
-    const result=[...arr].sort((a,b)=>a-b);
+    const result=[...input].sort((a,b)=>a-b);
     steps.push(arr(p+2,"k-way merge: use min-heap to merge sorted chunks",[12,13,14,15,16,17],result.map(v=>({val:v,state:"computed" as string})),"Merged result",{complexity:"O(n log p)"}));
     return steps;
   }
@@ -59,9 +60,10 @@ def k_way_merge(chunks):
 // ─── Bitonic Sort ─────────────────────────────────────────────────────────────
 export const bitonicSortModule: VisualizationModule<number[]> = {
   id: "bitonic-sort", slug: "bitonic-sort", title: "Bitonic Sort",
-  category: "parallel", difficulty: "Advanced",
+  category: ["parallel"], difficulty: "advanced",
   timeComplexity: "O(log²n) parallel steps", spaceComplexity: "O(n log²n)",
   description: "Sorting network: all comparisons known in advance — fully parallelizable.",
+  relatedTopics: [],
   pythonCode: `def bitonic_sort(arr, lo=0, cnt=None, direction=True):
     if cnt is None: cnt = len(arr)
     if cnt > 1:
@@ -82,14 +84,14 @@ def bitonic_merge(arr, lo, cnt, direction):
         bitonic_merge(arr, lo, k, direction)
         bitonic_merge(arr, lo+k, cnt-k, direction)`,
   codeSteps: [
-    { line: 5, description: "Recursively sort first half ascending" },
-    { line: 7, description: "Sort second half descending (creates bitonic)" },
-    { line: 9, description: "Merge: compare-and-swap pairs at distance k" },
-    { line: 14, description: "Compare arr[i] and arr[i+k] — swap if needed" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: [3,7,4,8,6,2,1,5],
-  generateSteps(arr) {
-    const a=[...arr];
+  generateSteps(input) {
+    const a=[...input];
     const steps: AnimationStep[] = [];
     steps.push(arr(1,"Initial array — all comparators known in advance",[1],a.map(v=>({val:v,state:"default" as string})),"Input",{n:a.length}));
     // Step 1: pairs
@@ -111,9 +113,10 @@ def bitonic_merge(arr, lo, cnt, direction):
 // ─── Odd-Even Sort ────────────────────────────────────────────────────────────
 export const oddEvenSortModule: VisualizationModule<number[]> = {
   id: "odd-even-sort", slug: "odd-even-sort", title: "Odd-Even Transposition Sort",
-  category: "parallel", difficulty: "Intermediate",
+  category: ["parallel"], difficulty: "intermediate",
   timeComplexity: "O(n) parallel phases", spaceComplexity: "O(n)",
   description: "Parallel bubble sort: alternating odd and even phase compare-swaps.",
+  relatedTopics: [],
   pythonCode: `def odd_even_sort(arr):
     n = len(arr)
     sorted = False
@@ -135,9 +138,9 @@ export const oddEvenSortModule: VisualizationModule<number[]> = {
         phase += 1
     return arr`,
   codeSteps: [
-    { line: 7, description: "Odd phase: compare pairs at positions (0,1),(2,3),…" },
-    { line: 13, description: "Even phase: compare pairs at positions (1,2),(3,4),…" },
-    { line: 9, description: "All comparisons in a phase are independent → parallel" },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 13, highlightLines: [13] },
+    { stepNumber: 9, highlightLines: [9] },
   ],
   defaultInput: [5,3,8,1,6,2,7,4],
   generateSteps(input) {
@@ -146,7 +149,7 @@ export const oddEvenSortModule: VisualizationModule<number[]> = {
     steps.push(arr(1,"Initial array",[1],a.map(v=>({val:v,state:"default" as string})),"Input",{}));
     for(let phase=0;phase<Math.min(6,a.length);phase++){
       const start=phase%2===0?0:1;
-      const swapped=[];
+      const swapped: number[]=[];
       for(let i=start;i<a.length-1;i+=2){
         if(a[i]>a[i+1]){[a[i],a[i+1]]=[a[i+1],a[i]];swapped.push(i,i+1);}
       }
@@ -160,9 +163,10 @@ export const oddEvenSortModule: VisualizationModule<number[]> = {
 // ─── Parallel Prefix Sum ──────────────────────────────────────────────────────
 export const parallelPrefixModule: VisualizationModule<number[]> = {
   id: "parallel-prefix", slug: "parallel-prefix", title: "Parallel Prefix Sum",
-  category: "parallel", difficulty: "Intermediate",
+  category: ["parallel"], difficulty: "intermediate",
   timeComplexity: "O(log n) parallel steps", spaceComplexity: "O(n)",
   description: "Compute all prefix sums in O(log n) parallel steps using up-sweep and down-sweep.",
+  relatedTopics: [],
   pythonCode: `def parallel_prefix_sum(arr):
     n = len(arr)
     # Up-sweep (reduce) phase
@@ -182,15 +186,15 @@ export const parallelPrefixModule: VisualizationModule<number[]> = {
         step //= 2
     return arr`,
   codeSteps: [
-    { line: 3, description: "Up-sweep: reduce pairs at increasing strides" },
-    { line: 5, description: "Each iteration step doubles — log n phases" },
-    { line: 8, description: "Set root to 0 (identity for prefix sum)" },
-    { line: 10, description: "Down-sweep: distribute prefix values down" },
-    { line: 13, description: "Swap and add to propagate sums" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 13, highlightLines: [13] },
   ],
   defaultInput: [1,3,2,5,4,2,3,1],
-  generateSteps(arr) {
-    const a=[...arr];
+  generateSteps(input) {
+    const a=[...input];
     const steps: AnimationStep[] = [];
     steps.push(arr(1,"Input array — compute prefix sums in O(log n) steps",[1],a.map(v=>({val:v,state:"default" as string})),"Input",{n:a.length}));
     // Up-sweep
@@ -206,8 +210,8 @@ export const parallelPrefixModule: VisualizationModule<number[]> = {
     a[a.length-1]=0;
     steps.push(arr(phase+1,"Set last element to 0 (down-sweep init)",[8],a.map(v=>({val:v,state:"default" as string})),"Down-sweep init",{}));
     // show final
-    const prefix=[...arr].map((_,i,ar)=>ar.slice(0,i).reduce((s,v)=>s+v,0));
-    steps.push(arr(phase+2,"Result: all prefix sums computed in parallel",[10,11,12,13,14,15],prefix.map(v=>({val:v,state:"highlighted" as string})),"Prefix sums",{parallelSteps:Math.log2(arr.length)}));
+    const prefix=[...input].map((_,i,ar)=>ar.slice(0,i).reduce((s,v)=>s+v,0));
+    steps.push(arr(phase+2,"Result: all prefix sums computed in parallel",[10,11,12,13,14,15],prefix.map(v=>({val:v,state:"highlighted" as string})),"Prefix sums",{parallelSteps:Math.log2(input.length)}));
     return steps;
   }
 };
@@ -215,9 +219,10 @@ export const parallelPrefixModule: VisualizationModule<number[]> = {
 // ─── Fork-Join ────────────────────────────────────────────────────────────────
 export const forkJoinModule: VisualizationModule<number> = {
   id: "fork-join", slug: "fork-join", title: "Fork-Join Model",
-  category: "parallel", difficulty: "Intermediate",
+  category: ["parallel"], difficulty: "intermediate",
   timeComplexity: "O(n/p + log p)", spaceComplexity: "O(p·stack)",
   description: "Divide work into sub-tasks (fork), execute in parallel, then synchronize (join).",
+  relatedTopics: [],
   pythonCode: `from concurrent.futures import ThreadPoolExecutor
 import math
 
@@ -236,20 +241,20 @@ def parallel_sum(arr, threshold=4):
 # class SumTask extends RecursiveTask<Long>:
 #   compute(): if small: return seq_sum() else: fork+join subtasks`,
   codeSteps: [
-    { line: 5, description: "Base case: problem small enough → solve sequentially" },
-    { line: 7, description: "Fork: split into two sub-tasks" },
-    { line: 9, description: "Submit each half to thread pool" },
-    { line: 11, description: "Join: wait for both results and combine" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 11, highlightLines: [11] },
   ],
   defaultInput: 8,
   generateSteps(n) {
-    const arr=Array.from({length:n},(_,i)=>i+1);
+    const data=Array.from({length:n},(_,i)=>i+1);
     const steps: AnimationStep[] = [];
-    steps.push(arr(1,`Parallel sum of [1..${n}]`,[3],arr.map(v=>({val:v,state:"default" as string})),"Input",{n}));
+    steps.push(arr(1,`Parallel sum of [1..${n}]`,[3],data.map(v=>({val:v,state:"default" as string})),"Input",{n}));
     const half=Math.ceil(n/2);
-    steps.push(arr(2,`Fork: left=[1..${half}], right=[${half+1}..${n}]`,[7,8,9,10],arr.map((v,i)=>({val:v,state:i<half?"active":"computed" as string})),"Forked",{tasks:2}));
-    const leftSum=arr.slice(0,half).reduce((a,b)=>a+b,0);
-    const rightSum=arr.slice(half).reduce((a,b)=>a+b,0);
+    steps.push(arr(2,`Fork: left=[1..${half}], right=[${half+1}..${n}]`,[7,8,9,10],data.map((v,i)=>({val:v,state:i<half?"active":"computed" as string})),"Forked",{tasks:2}));
+    const leftSum=data.slice(0,half).reduce((a,b)=>a+b,0);
+    const rightSum=data.slice(half).reduce((a,b)=>a+b,0);
     steps.push(arr(3,`Sub-tasks computing in parallel: left=${leftSum}, right=${rightSum}`,[5,6],[{val:`L=${leftSum}`,state:"highlighted"},{val:`R=${rightSum}`,state:"highlighted"}],"Parallel",{concurrent:true}));
     steps.push(arr(4,`Join: total=${leftSum+rightSum}`,[11,12],[{val:`${leftSum}+${rightSum}`,state:"active"},{val:`=${leftSum+rightSum}`,state:"highlighted"}],"Joined",{total:leftSum+rightSum}));
     return steps;
@@ -259,9 +264,10 @@ def parallel_sum(arr, threshold=4):
 // ─── Actor Model ──────────────────────────────────────────────────────────────
 export const actorModelModule: VisualizationModule<number> = {
   id: "actor-model", slug: "actor-model", title: "Actor Model",
-  category: "parallel", difficulty: "Advanced",
+  category: ["parallel"], difficulty: "advanced",
   timeComplexity: "O(messages)", spaceComplexity: "O(actors)",
   description: "Concurrency via message-passing actors — no shared state, no locks.",
+  relatedTopics: [],
   pythonCode: `# Actor model using Python's asyncio
 import asyncio
 from dataclasses import dataclass
@@ -286,10 +292,10 @@ class Actor:
     async def handle(self, msg):
         raise NotImplementedError  # subclass defines behavior`,
   codeSteps: [
-    { line: 11, description: "Each actor has its own mailbox (queue)" },
-    { line: 13, description: "Send: async put message in target's mailbox" },
-    { line: 15, description: "run: continuously process messages from mailbox" },
-    { line: 18, description: "handle: user-defined behavior per message type" },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 13, highlightLines: [13] },
+    { stepNumber: 15, highlightLines: [15] },
+    { stepNumber: 18, highlightLines: [18] },
   ],
   defaultInput: 3,
   generateSteps(actors) {
@@ -307,9 +313,10 @@ class Actor:
 // ─── Pipeline Parallelism ─────────────────────────────────────────────────────
 export const pipelineParallelModule: VisualizationModule<number> = {
   id: "pipeline-parallel", slug: "pipeline-parallel", title: "Pipeline Parallelism",
-  category: "parallel", difficulty: "Intermediate",
+  category: ["parallel"], difficulty: "intermediate",
   timeComplexity: "O(n + p - 1) cycles", spaceComplexity: "O(p)",
   description: "Overlap execution of multiple tasks across pipeline stages.",
+  relatedTopics: [],
   pythonCode: `# Pipeline: stages execute on different items simultaneously
 # Stage 1: Fetch → Stage 2: Decode → Stage 3: Execute → Stage 4: Write
 
@@ -332,10 +339,10 @@ class Pipeline:
             buffers = new_bufs
         return results`,
   codeSteps: [
-    { line: 3, description: "4 pipeline stages: Fetch, Decode, Execute, Write" },
-    { line: 9, description: "Each cycle: advance all stages simultaneously" },
-    { line: 11, description: "Process next item into each stage" },
-    { line: 14, description: "Items flow through pipeline, all stages busy" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: 4,
   generateSteps(items) {
@@ -357,9 +364,10 @@ class Pipeline:
 // ─── SIMD ─────────────────────────────────────────────────────────────────────
 export const simdModule: VisualizationModule<number[]> = {
   id: "simd", slug: "simd", title: "SIMD (Single Instruction Multiple Data)",
-  category: "parallel", difficulty: "Advanced",
+  category: ["parallel"], difficulty: "advanced",
   timeComplexity: "O(n/w) vs O(n) scalar", spaceComplexity: "O(1)",
   description: "Execute one instruction on multiple data elements simultaneously using vector registers.",
+  relatedTopics: [],
   pythonCode: `import numpy as np  # NumPy uses SIMD under the hood
 
 # Scalar: process one element at a time
@@ -380,10 +388,10 @@ def simd_add(a, b):
 # __m256 vc = _mm256_add_ps(va, vb)  # add all 8 at once
 # _mm256_store_ps(c, vc)`,
   codeSteps: [
-    { line: 4, description: "Scalar: one addition per loop iteration" },
-    { line: 10, description: "SIMD: 8 additions in a single VADDPS instruction" },
-    { line: 14, description: "Load 8 floats into 256-bit YMM register" },
-    { line: 16, description: "Single add instruction processes all 8 pairs" },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 16, highlightLines: [16] },
   ],
   defaultInput: [1,2,3,4,5,6,7,8],
   generateSteps(a) {
@@ -404,9 +412,10 @@ def simd_add(a, b):
 // ─── Warp Execution (GPU) ─────────────────────────────────────────────────────
 export const warpExecutionModule: VisualizationModule<number> = {
   id: "warp-execution", slug: "warp-execution", title: "GPU Warp Execution",
-  category: "parallel", difficulty: "Advanced",
+  category: ["parallel"], difficulty: "advanced",
   timeComplexity: "O(n/32) warps", spaceComplexity: "O(n)",
   description: "GPU executes 32 threads in lockstep (warp); branch divergence causes serialization.",
+  relatedTopics: [],
   pythonCode: `# CUDA kernel: each thread processes one element
 # Warp = 32 threads executing same instruction
 
@@ -424,11 +433,11 @@ __global__ void divergent(float *a, int n):
         a[tid] = 0              # other half executes this (serialized!)
 # Both paths execute — threads not taking a path are MASKED OUT`,
   codeSteps: [
-    { line: 4, description: "tid: global thread index from block+thread ID" },
-    { line: 6, description: "All 32 threads in warp execute this simultaneously" },
-    { line: 9, description: "Branch: different threads take different paths" },
-    { line: 11, description: "Half warp: sqrt path (other half masked)" },
-    { line: 13, description: "Other half: zero path — 2x slower than no branch" },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 13, highlightLines: [13] },
   ],
   defaultInput: 64,
   generateSteps(n) {
@@ -446,9 +455,10 @@ __global__ void divergent(float *a, int n):
 // ─── CUDA Memory Hierarchy ────────────────────────────────────────────────────
 export const cudaMemoryModule: VisualizationModule<string> = {
   id: "cuda-memory", slug: "cuda-memory", title: "CUDA Memory Hierarchy",
-  category: "parallel", difficulty: "Advanced",
+  category: ["parallel"], difficulty: "advanced",
   timeComplexity: "varies by memory tier", spaceComplexity: "O(1)",
   description: "GPU memory: registers (fastest) → shared → L1 → L2 → global (slowest).",
+  relatedTopics: [],
   pythonCode: `# CUDA memory types and usage
 
 # 1. Registers (fastest, per-thread, ~4KB)
@@ -470,12 +480,12 @@ __global__ void tiled_matmul(float *A, float *B, float *C):
 # Coalesced access: threads access consecutive addresses
 # Bad: a[tid*stride]  Good: a[tid] (coalesced)`,
   codeSteps: [
-    { line: 3, description: "Registers: ~1 cycle, per-thread, spill to L1" },
-    { line: 7, description: "Shared memory: ~5 cycles, per-block, fast" },
-    { line: 10, description: "Load from global to shared: amortize global latency" },
-    { line: 11, description: "__syncthreads(): warp barrier for shared mem consistency" },
-    { line: 14, description: "Global memory: ~400 cycles — minimize accesses" },
-    { line: 18, description: "Coalesced: threads access sequential addresses for bandwidth" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 18, highlightLines: [18] },
   ],
   defaultInput: "tiled_matmul",
   generateSteps(kernel) {

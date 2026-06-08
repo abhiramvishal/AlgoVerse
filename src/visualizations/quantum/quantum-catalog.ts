@@ -10,9 +10,10 @@ function mat(stepNumber: number, description: string, lines: number[], matrix: (
 // ─── Hadamard Gate ────────────────────────────────────────────────────────────
 export const hadamardGateModule: VisualizationModule<number> = {
   id: "hadamard-gate", slug: "hadamard-gate", title: "Hadamard Gate",
-  category: "quantum", difficulty: "Beginner",
+  category: ["quantum"], difficulty: "beginner",
   timeComplexity: "O(1)", spaceComplexity: "O(1)",
   description: "Creates equal superposition: H|0⟩ = (|0⟩+|1⟩)/√2, H|1⟩ = (|0⟩-|1⟩)/√2.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 # Hadamard gate matrix
@@ -34,11 +35,11 @@ print(minus)  # [0.707,-0.707]
 prob_0_given_plus = abs(plus[0])**2    # 0.5
 prob_1_given_plus = abs(plus[1])**2    # 0.5`,
   codeSteps: [
-    { line: 3, description: "H = [[1,1],[1,-1]] / √2" },
-    { line: 7, description: "|0⟩ = [1,0], |1⟩ = [0,1] (computational basis)" },
-    { line: 11, description: "H|0⟩ = |+⟩: equal superposition" },
-    { line: 12, description: "H|1⟩ = |-⟩: equal superposition with phase flip" },
-    { line: 16, description: "Probability: |amplitude|² gives measurement prob" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 16, highlightLines: [16] },
   ],
   defaultInput: 0,
   generateSteps(initial) {
@@ -57,9 +58,10 @@ prob_1_given_plus = abs(plus[1])**2    # 0.5`,
 // ─── CNOT Gate ────────────────────────────────────────────────────────────────
 export const cnotGateModule: VisualizationModule<string> = {
   id: "cnot-gate", slug: "cnot-gate", title: "CNOT Gate",
-  category: "quantum", difficulty: "Beginner",
+  category: ["quantum"], difficulty: "beginner",
   timeComplexity: "O(1)", spaceComplexity: "O(1)",
   description: "Controlled-NOT: flips target qubit iff control is |1⟩. Entangles qubits.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 # CNOT gate (controlled-X) — 4×4 matrix for 2 qubits
@@ -81,10 +83,10 @@ print(CNOT @ ket_01)  # |01⟩ → |01⟩
 print(CNOT @ ket_10)  # |10⟩ → |11⟩ ← flip!
 print(CNOT @ ket_11)  # |11⟩ → |10⟩ ← flip!`,
   codeSteps: [
-    { line: 3, description: "CNOT: 4×4 unitary gate on 2-qubit system" },
-    { line: 11, description: "2-qubit basis states in computational basis" },
-    { line: 16, description: "Control=0: target unchanged" },
-    { line: 18, description: "Control=1: target flipped" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 16, highlightLines: [16] },
+    { stepNumber: 18, highlightLines: [18] },
   ],
   defaultInput: "10",
   generateSteps(state) {
@@ -102,9 +104,10 @@ print(CNOT @ ket_11)  # |11⟩ → |10⟩ ← flip!`,
 // ─── Toffoli Gate ─────────────────────────────────────────────────────────────
 export const toffoliGateModule: VisualizationModule<string> = {
   id: "toffoli-gate", slug: "toffoli-gate", title: "Toffoli Gate (CCNOT)",
-  category: "quantum", difficulty: "Intermediate",
+  category: ["quantum"], difficulty: "intermediate",
   timeComplexity: "O(1)", spaceComplexity: "O(1)",
   description: "Controlled-Controlled-NOT: universal gate for reversible classical computation.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 # Toffoli gate: 3-qubit, 8×8 matrix
@@ -127,10 +130,10 @@ def toffoli(c1, c2, target):
 
 # Universality: NAND gate = Toffoli(c1,c2,1)`,
   codeSteps: [
-    { line: 6, description: "target ⊕= c1 AND c2 (reversible NAND)" },
-    { line: 10, description: "Truth table: only flips when both controls are |1⟩" },
-    { line: 18, description: "110→111: both controls 1, target 0 flips to 1" },
-    { line: 20, description: "Universality: can simulate any classical gate" },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 18, highlightLines: [18] },
+    { stepNumber: 20, highlightLines: [20] },
   ],
   defaultInput: "110",
   generateSteps(state) {
@@ -139,7 +142,7 @@ def toffoli(c1, c2, target):
     const out=`${c1}${c2}${newT}`;
     const steps: AnimationStep[] = [];
     steps.push(arr(1,`Input: |${state}⟩ (c1=|${c1}⟩, c2=|${c2}⟩, target=|${t}⟩)`,[6],[{val:`c1=${c1}`,state:"active"},{val:`c2=${c2}`,state:"active"},{val:`tgt=${t}`,state:"active"}],"Input",{state}));
-    steps.push(arr(2,`AND gate: c1·c2 = ${c1}&${c2} = ${c1&c2}`,[6],[{val:`c1·c2=${c1&c2}`,state:c1&c2===1?"highlighted":"computed"}],"AND",{and:c1&c2}));
+    steps.push(arr(2,`AND gate: c1·c2 = ${c1}&${c2} = ${c1&c2}`,[6],[{val:`c1·c2=${c1&c2}`,state:(c1&c2)===1?"highlighted":"computed"}],"AND",{and:c1&c2}));
     steps.push(arr(3,`XOR: target ⊕ AND = ${t} ⊕ ${c1&c2} = ${newT}`,[6],[{val:`${t}⊕${c1&c2}=${newT}`,state:"highlighted"},{val:`|${out}⟩`,state:"highlighted"}],"Output",{flipped:newT!==t}));
     steps.push(arr(4,"Toffoli realizes NAND: Toffoli(a,b,1) = NOT(a AND b)",[20],[{val:"NAND=Toffoli(a,b,1)",state:"computed"},{val:"universal",state:"highlighted"}],"Universality",{classical:true}));
     return steps;
@@ -149,9 +152,10 @@ def toffoli(c1, c2, target):
 // ─── Pauli Gates ──────────────────────────────────────────────────────────────
 export const pauliGatesModule: VisualizationModule<string> = {
   id: "pauli-gates", slug: "pauli-gates", title: "Pauli Gates (X, Y, Z)",
-  category: "quantum", difficulty: "Beginner",
+  category: ["quantum"], difficulty: "beginner",
   timeComplexity: "O(1)", spaceComplexity: "O(1)",
   description: "Fundamental single-qubit gates: X (NOT), Y (rotate), Z (phase flip).",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 # Pauli matrices
@@ -173,11 +177,11 @@ print(Z @ ket_1)  # [0,-1] = -|1⟩ (phase flip)
 # Y = iXZ
 # All Pauli gates are their own inverses (unitary & Hermitian)`,
   codeSteps: [
-    { line: 3, description: "X = bit flip: |0⟩↔|1⟩ (quantum NOT)" },
-    { line: 4, description: "Y = bit + phase flip (complex entries)" },
-    { line: 5, description: "Z = phase flip: |1⟩ → -|1⟩, |0⟩ unchanged" },
-    { line: 11, description: "X|0⟩ = |1⟩: qubit flipped" },
-    { line: 15, description: "Z|1⟩ = -|1⟩: phase rotated by π" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 15, highlightLines: [15] },
   ],
   defaultInput: "X",
   generateSteps(gate) {
@@ -199,9 +203,10 @@ print(Z @ ket_1)  # [0,-1] = -|1⟩ (phase flip)
 // ─── Grover's Search ──────────────────────────────────────────────────────────
 export const groverSearchModule: VisualizationModule<{n:number,target:number}> = {
   id: "grover-search", slug: "grover-search", title: "Grover's Search",
-  category: "quantum", difficulty: "Advanced",
+  category: ["quantum"], difficulty: "advanced",
   timeComplexity: "O(√N)", spaceComplexity: "O(log N) qubits",
   description: "Quantum search algorithm: find target in unsorted N-element database in O(√N) steps.",
+  relatedTopics: [],
   pythonCode: `import numpy as np, math
 
 def grover(N, target):
@@ -220,11 +225,11 @@ def grover(N, target):
 # Classical: O(N) avg, Quantum: O(√N) = quadratic speedup
 # Example: N=16, √16=4 iterations needed`,
   codeSteps: [
-    { line: 4, description: "Equal superposition: all N states with amplitude 1/√N" },
-    { line: 5, description: "Optimal iterations: π√N/4" },
-    { line: 8, description: "Oracle: mark target by negating its amplitude" },
-    { line: 10, description: "Grover diffusion: reflect all amplitudes about mean" },
-    { line: 12, description: "Measure: target has highest probability ≈ 1" },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 12, highlightLines: [12] },
   ],
   defaultInput: {n:8, target:3},
   generateSteps({n, target}) {
@@ -247,9 +252,10 @@ def grover(N, target):
 // ─── Shor's Factoring ────────────────────────────────────────────────────────
 export const shorFactoringModule: VisualizationModule<number> = {
   id: "shor-factoring", slug: "shor-factoring", title: "Shor's Algorithm",
-  category: "quantum", difficulty: "Advanced",
+  category: ["quantum"], difficulty: "advanced",
   timeComplexity: "O((log N)³)", spaceComplexity: "O(log N) qubits",
   description: "Factor large integers exponentially faster than classical algorithms via quantum period-finding.",
+  relatedTopics: [],
   pythonCode: `import math, random
 
 def shor_factor(N):
@@ -272,11 +278,11 @@ def shor_factor(N):
 # - Quantum Fourier Transform (QFT)
 # Complexity: O((log N)^3) — exponential speedup over classical`,
   codeSteps: [
-    { line: 4, description: "Choose random a coprime to N" },
-    { line: 7, description: "Quantum sub-routine: find period r of f(x)=aˣ mod N" },
-    { line: 9, description: "Need even period; retry if odd" },
-    { line: 11, description: "GCD(a^(r/2)±1, N) yields non-trivial factor" },
-    { line: 18, description: "Uses QPE + QFT — O(log³N) quantum complexity" },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 18, highlightLines: [18] },
   ],
   defaultInput: 15,
   generateSteps(N) {
@@ -299,9 +305,10 @@ def shor_factor(N):
 // ─── Quantum Teleportation ────────────────────────────────────────────────────
 export const quantumTeleportationModule: VisualizationModule<string> = {
   id: "quantum-teleportation", slug: "quantum-teleportation", title: "Quantum Teleportation",
-  category: "quantum", difficulty: "Advanced",
+  category: ["quantum"], difficulty: "advanced",
   timeComplexity: "O(1) quantum ops + 2 classical bits", spaceComplexity: "O(3) qubits",
   description: "Transmit arbitrary qubit state using entanglement and 2 classical bits (no FTL).",
+  relatedTopics: [],
   pythonCode: `# Quantum teleportation protocol
 # Parties: Alice (has qubit |ψ⟩ to send), Bob
 
@@ -322,12 +329,12 @@ if m2 == 1: X(bob_qubit)   # bit flip
 if m1 == 1: Z(bob_qubit)   # phase flip
 # Bob's qubit now = |ψ⟩  (teleported!)`,
   codeSteps: [
-    { line: 4, description: "Create Bell pair: H then CNOT → entangled |Φ+⟩" },
-    { line: 7, description: "Alice: CNOT on |ψ⟩,bell then H on |ψ⟩" },
-    { line: 10, description: "Alice measures → 2 classical bits (m1, m2)" },
-    { line: 13, description: "Send m1,m2 via classical channel (needed for protocol)" },
-    { line: 15, description: "Bob applies X and/or Z based on classical bits" },
-    { line: 17, description: "Bob's qubit = |ψ⟩ — state successfully teleported!" },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 13, highlightLines: [13] },
+    { stepNumber: 15, highlightLines: [15] },
+    { stepNumber: 17, highlightLines: [17] },
   ],
   defaultInput: "α|0⟩+β|1⟩",
   generateSteps(psi) {
@@ -344,9 +351,10 @@ if m1 == 1: Z(bob_qubit)   # phase flip
 // ─── Deutsch-Jozsa ────────────────────────────────────────────────────────────
 export const deutschJozsaModule: VisualizationModule<string> = {
   id: "deutsch-jozsa", slug: "deutsch-jozsa", title: "Deutsch-Jozsa Algorithm",
-  category: "quantum", difficulty: "Intermediate",
+  category: ["quantum"], difficulty: "intermediate",
   timeComplexity: "O(1) queries (classical: O(2^n/2))", spaceComplexity: "O(n) qubits",
   description: "Determine if f:{0,1}ⁿ→{0,1} is constant or balanced in a single query.",
+  relatedTopics: [],
   pythonCode: `# Deutsch-Jozsa: is f constant or balanced?
 # Constant: f(x) = 0 for all x, or f(x) = 1 for all x
 # Balanced: f(x) = 0 for half, f(x) = 1 for other half
@@ -366,11 +374,11 @@ def deutsch_jozsa(oracle, n):
     # If any non-zero → BALANCED
     return 'constant' if result == 0 else 'balanced'`,
   codeSteps: [
-    { line: 5, description: "Initialize n+1 qubits in specific state" },
-    { line: 7, description: "Hadamard: create superposition of all 2ⁿ inputs" },
-    { line: 8, description: "Oracle query: evaluates f on all inputs simultaneously" },
-    { line: 9, description: "Hadamard again to extract global property" },
-    { line: 11, description: "Measure: all-zeros → constant, any 1 → balanced" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 11, highlightLines: [11] },
   ],
   defaultInput: "balanced",
   generateSteps(fType) {
@@ -387,9 +395,10 @@ def deutsch_jozsa(oracle, n):
 // ─── Superposition ────────────────────────────────────────────────────────────
 export const superpositionModule: VisualizationModule<number[]> = {
   id: "superposition", slug: "superposition", title: "Quantum Superposition",
-  category: "quantum", difficulty: "Beginner",
+  category: ["quantum"], difficulty: "beginner",
   timeComplexity: "O(1)", spaceComplexity: "O(2ⁿ)",
   description: "A qubit can be in states |0⟩ and |1⟩ simultaneously until measured.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 # A qubit state: |ψ⟩ = α|0⟩ + β|1⟩
@@ -416,11 +425,11 @@ class Qubit:
 # n-qubit system: 2^n dimensional vector
 # Exponential state space!`,
   codeSteps: [
-    { line: 3, description: "|ψ⟩ = α|0⟩ + β|1⟩ — linear combination" },
-    { line: 4, description: "Normalization: |α|² + |β|² = 1" },
-    { line: 10, description: "P(measure 0) = |α|²" },
-    { line: 16, description: "Measurement: wavefunction collapses!" },
-    { line: 21, description: "n qubits: 2ⁿ complex amplitudes" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 16, highlightLines: [16] },
+    { stepNumber: 21, highlightLines: [21] },
   ],
   defaultInput: [0.6, 0.8],
   generateSteps([alpha, beta]) {
@@ -441,9 +450,10 @@ class Qubit:
 // ─── Entanglement ─────────────────────────────────────────────────────────────
 export const entanglementModule: VisualizationModule<string> = {
   id: "entanglement", slug: "entanglement", title: "Quantum Entanglement",
-  category: "quantum", difficulty: "Intermediate",
+  category: ["quantum"], difficulty: "intermediate",
   timeComplexity: "O(1)", spaceComplexity: "O(4) for 2 qubits",
   description: "Bell states: maximally entangled 2-qubit states — measuring one instantly determines other.",
+  relatedTopics: [],
   pythonCode: `import numpy as np
 
 # Bell states (maximally entangled 2-qubit states)
@@ -466,11 +476,11 @@ def create_bell_pair():
     state = (H ⊗ I) @ state      # |+0⟩
     state = CNOT @ state          # |Φ+⟩`,
   codeSteps: [
-    { line: 4, description: "|Φ+⟩ = (|00⟩+|11⟩)/√2: EPR pair" },
-    { line: 8, description: "Non-separable: cannot factor into individual qubit states" },
-    { line: 11, description: "Measure Alice: instant knowledge of Bob's state" },
-    { line: 14, description: "No faster-than-light signaling (classical comm needed)" },
-    { line: 17, description: "Create Bell pair: H on qubit 0, then CNOT" },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 17, highlightLines: [17] },
   ],
   defaultInput: "Φ+",
   generateSteps(bell) {
@@ -493,9 +503,10 @@ def create_bell_pair():
 // ─── Quantum Error Correction ─────────────────────────────────────────────────
 export const quantumErrorModule: VisualizationModule<string> = {
   id: "quantum-error", slug: "quantum-error", title: "Quantum Error Correction",
-  category: "quantum", difficulty: "Advanced",
+  category: ["quantum"], difficulty: "advanced",
   timeComplexity: "O(n²) for Steane [7,1,3]", spaceComplexity: "O(7) qubits per logical qubit",
   description: "Protect qubits from decoherence using redundancy and syndrome measurement.",
+  relatedTopics: [],
   pythonCode: `# 3-qubit bit-flip code (simplest QEC)
 # Encode: |0⟩ → |000⟩, |1⟩ → |111⟩
 
@@ -517,10 +528,10 @@ def correct(q0, q1, q2, s1, s2):
     if s1==0 and s2==1: X(q2)   # flip qubit 2
     # Now decode: majority vote`,
   codeSteps: [
-    { line: 3, description: "Encode: CNOT creates 3-way entangled logical qubit" },
-    { line: 9, description: "Syndrome: measure parities without disturbing state" },
-    { line: 13, description: "s1,s2 identify which qubit (if any) flipped" },
-    { line: 16, description: "Apply X to flip erroneous qubit back" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 13, highlightLines: [13] },
+    { stepNumber: 16, highlightLines: [16] },
   ],
   defaultInput: "bit-flip",
   generateSteps(code) {

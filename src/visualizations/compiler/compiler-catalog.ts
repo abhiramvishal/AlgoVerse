@@ -11,6 +11,7 @@ export const dfaLexerModule: VisualizationModule<null> = {
   category: ["compiler", "lexing"], difficulty: "intermediate",
   timeComplexity: "O(n)", spaceComplexity: "O(states)",
   description: "DFA-based lexer: scan source character by character, transition states, emit tokens when accepting states reached.",
+  relatedTopics: [],
   pythonCode: `# DFA Lexer — tokenize simple expressions
 
 tokens = []
@@ -76,6 +77,7 @@ export const nfaToDfaModule: VisualizationModule<null> = {
   category: ["compiler", "lexing"], difficulty: "advanced",
   timeComplexity: "O(2^n) states", spaceComplexity: "O(2^n)",
   description: "Subset construction: convert NFA to equivalent DFA. Each DFA state = set of NFA states reachable from ε-closures.",
+  relatedTopics: [],
   pythonCode: `# NFA to DFA — Subset Construction
 
 # NFA: states {0,1,2,3}, alphabet {a,b}
@@ -155,6 +157,7 @@ export const regexToNfaModule: VisualizationModule<null> = {
   category: ["compiler", "lexing"], difficulty: "advanced",
   timeComplexity: "O(n)", spaceComplexity: "O(n)",
   description: "Thompson's construction: build NFA from regex using ε-transitions for alternation, concatenation, and Kleene star.",
+  relatedTopics: [],
   pythonCode: `# Thompson's Construction: regex → NFA
 
 # Base: single character 'a'
@@ -215,6 +218,7 @@ export const tokenizationModule: VisualizationModule<null> = {
   category: ["compiler", "lexing"], difficulty: "beginner",
   timeComplexity: "O(n)", spaceComplexity: "O(tokens)",
   description: "First phase of compilation: convert raw source text into a stream of typed tokens. Whitespace and comments removed.",
+  relatedTopics: [],
   pythonCode: `# Tokenization — Lexical Analysis
 
 import re
@@ -278,6 +282,7 @@ export const recursiveDescentModule: VisualizationModule<null> = {
   category: ["compiler", "parsing"], difficulty: "intermediate",
   timeComplexity: "O(n)", spaceComplexity: "O(n) call stack",
   description: "Top-down parser: one function per grammar rule. Recursively calls itself for sub-expressions. Simple but limited to LL(k) grammars.",
+  relatedTopics: [],
   pythonCode: `# Recursive Descent Parser
 # Grammar: expr = term (('+' | '-') term)*
 #          term = factor (('*' | '/') factor)*
@@ -361,6 +366,7 @@ export const ll1ParserModule: VisualizationModule<null> = {
   category: ["compiler", "parsing"], difficulty: "advanced",
   timeComplexity: "O(n)", spaceComplexity: "O(n)",
   description: "Table-driven top-down parser. 1 lookahead token selects production. Requires LL(1) grammar (no left recursion, no ambiguity).",
+  relatedTopics: [],
   pythonCode: `# LL(1) Parser — Table-Driven
 
 # Grammar (LL(1)-transformed):
@@ -441,6 +447,7 @@ export const lr0ParserModule: VisualizationModule<null> = {
   category: ["compiler", "parsing"], difficulty: "advanced",
   timeComplexity: "O(n)", spaceComplexity: "O(n)",
   description: "Bottom-up shift-reduce parser. LR(0) items track parsing progress. Shift tokens onto stack; reduce when right-hand side complete.",
+  relatedTopics: [],
   pythonCode: `# LR(0) Parser — Shift-Reduce
 
 # Grammar: S' → E, E → E + T | T, T → id
@@ -524,6 +531,7 @@ export const lalrParserModule: VisualizationModule<null> = {
   category: ["compiler", "parsing"], difficulty: "advanced",
   timeComplexity: "O(n)", spaceComplexity: "O(grammar size)",
   description: "LALR(1): merges LR(1) states with same core. Used by yacc/bison. More powerful than LR(0), less than full LR(1).",
+  relatedTopics: [],
   pythonCode: `# LALR(1) Parser — Look-Ahead LR
 
 # LALR vs LR(1):
@@ -581,6 +589,7 @@ export const earleyParserModule: VisualizationModule<null> = {
   category: ["compiler", "parsing"], difficulty: "advanced",
   timeComplexity: "O(n³) general, O(n) for unambiguous", spaceComplexity: "O(n²)",
   description: "General parsing algorithm that works for ALL context-free grammars including ambiguous ones. Used for NLP and complex grammars.",
+  relatedTopics: [],
   pythonCode: `# Earley Parser — General CFG Parser
 
 # Earley item: (rule, dot_position, start_index)
@@ -648,6 +657,7 @@ export const symbolTableModule: VisualizationModule<null> = {
   category: ["compiler", "semantic-analysis"], difficulty: "intermediate",
   timeComplexity: "O(1) lookup (hash)", spaceComplexity: "O(symbols)",
   description: "Compiler's dictionary: maps identifiers to their type, scope, and memory location. Scoped symbol tables handle nested scopes.",
+  relatedTopics: [],
   pythonCode: `# Symbol Table — Scoped
 
 class Symbol:
@@ -725,6 +735,7 @@ export const typeCheckingModule: VisualizationModule<null> = {
   category: ["compiler", "semantic-analysis"], difficulty: "intermediate",
   timeComplexity: "O(n)", spaceComplexity: "O(n)",
   description: "Semantic analysis: verify operand types match operators. Type inference, coercion, and error reporting.",
+  relatedTopics: [],
   pythonCode: `# Type Checking — Static Analysis
 
 class TypeChecker:
@@ -795,6 +806,7 @@ export const astGenModule: VisualizationModule<null> = {
   category: ["compiler", "semantic-analysis"], difficulty: "intermediate",
   timeComplexity: "O(n)", spaceComplexity: "O(n)",
   description: "Abstract Syntax Tree: structured representation of source code after parsing. Removes syntactic sugar, keeps semantic structure.",
+  relatedTopics: [],
   pythonCode: `# AST Generation
 
 from dataclasses import dataclass
@@ -885,6 +897,7 @@ export const threeAddressCodeModule: VisualizationModule<null> = {
   category: ["compiler", "code-generation"], difficulty: "intermediate",
   timeComplexity: "O(n)", spaceComplexity: "O(n)",
   description: "Intermediate representation: each instruction has at most 3 addresses (result = op1 operator op2). Easy to optimize and translate.",
+  relatedTopics: [],
   pythonCode: `# Three-Address Code (TAC) — Intermediate Representation
 
 # Source: x = a + b * c - d
@@ -959,6 +972,7 @@ export const registerAllocationModule: VisualizationModule<null> = {
   category: ["compiler", "code-generation"], difficulty: "advanced",
   timeComplexity: "O(n) with linear scan", spaceComplexity: "O(live ranges)",
   description: "Assign program variables to physical registers. Graph coloring: build interference graph, color with k colors = k registers.",
+  relatedTopics: [],
   pythonCode: `# Register Allocation — Graph Coloring
 
 # Liveness Analysis: when is each variable live?
@@ -1054,6 +1068,7 @@ export const constantFoldingModule: VisualizationModule<null> = {
   category: ["compiler", "optimization"], difficulty: "intermediate",
   timeComplexity: "O(n) AST walk", spaceComplexity: "O(1)",
   description: "Compile-time evaluation of constant expressions. 2 + 3 → 5 before runtime. Part of compiler optimization passes.",
+  relatedTopics: [],
   pythonCode: `# Constant Folding — Compiler Optimization
 
 def constant_fold(node):
@@ -1121,6 +1136,7 @@ export const deadCodeEliminationModule: VisualizationModule<null> = {
   category: ["compiler", "optimization"], difficulty: "intermediate",
   timeComplexity: "O(n) liveness analysis", spaceComplexity: "O(n)",
   description: "Remove code that cannot affect program output: unreachable code, computations whose results are never used.",
+  relatedTopics: [],
   pythonCode: `# Dead Code Elimination
 
 # Type 1: Unreachable code (after return/goto)

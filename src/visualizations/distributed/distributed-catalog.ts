@@ -10,9 +10,10 @@ function flow(stepNumber: number, description: string, lines: number[], lanes: s
 // ─── Raft Consensus ───────────────────────────────────────────────────────────
 export const raftModule: VisualizationModule<number> = {
   id: "raft", slug: "raft", title: "Raft Consensus",
-  category: "distributed", difficulty: "Advanced",
+  category: ["distributed"], difficulty: "advanced",
   timeComplexity: "O(log n) per entry", spaceComplexity: "O(n)",
   description: "Leader-based consensus algorithm: elect a leader, replicate log, commit on majority.",
+  relatedTopics: [],
   pythonCode: `# Raft roles: Leader, Follower, Candidate
 
 class RaftNode:
@@ -43,12 +44,12 @@ class RaftNode:
         if acks >= len(self.peers) // 2:
             self.commit_index = len(self.log) - 1`,
   codeSteps: [
-    { line: 6, description: "All nodes start as followers" },
-    { line: 11, description: "Election timeout → become candidate" },
-    { line: 15, description: "Request votes from peers" },
-    { line: 17, description: "Win majority → become leader" },
-    { line: 21, description: "Leader replicates log to followers" },
-    { line: 23, description: "Commit when majority acknowledges" },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 15, highlightLines: [15] },
+    { stepNumber: 17, highlightLines: [17] },
+    { stepNumber: 21, highlightLines: [21] },
+    { stepNumber: 23, highlightLines: [23] },
   ],
   defaultInput: 5,
   generateSteps(nodes) {
@@ -67,9 +68,10 @@ class RaftNode:
 // ─── Paxos ────────────────────────────────────────────────────────────────────
 export const paxosModule: VisualizationModule<number> = {
   id: "paxos", slug: "paxos", title: "Paxos Consensus",
-  category: "distributed", difficulty: "Advanced",
+  category: ["distributed"], difficulty: "advanced",
   timeComplexity: "O(1) rounds (2 phases)", spaceComplexity: "O(n)",
   description: "Two-phase consensus: Prepare/Promise then Accept/Accepted.",
+  relatedTopics: [],
   pythonCode: `# Paxos: Proposer, Acceptors, Learners
 
 class Proposer:
@@ -94,12 +96,12 @@ class Proposer:
             self.learn(v)
             return v`,
   codeSteps: [
-    { line: 5, description: "Proposer chooses unique proposal number n" },
-    { line: 7, description: "Phase 1: send Prepare(n) to all acceptors" },
-    { line: 8, description: "Acceptor promises not to accept n' < n" },
-    { line: 12, description: "Use highest previously accepted value" },
-    { line: 15, description: "Phase 2: send Accept(n, v) to acceptors" },
-    { line: 18, description: "Commit if majority accepts" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 15, highlightLines: [15] },
+    { stepNumber: 18, highlightLines: [18] },
   ],
   defaultInput: 3,
   generateSteps(quorum) {
@@ -117,9 +119,10 @@ class Proposer:
 // ─── Byzantine Fault Tolerance ────────────────────────────────────────────────
 export const byzantineFtModule: VisualizationModule<number> = {
   id: "byzantine-ft", slug: "byzantine-ft", title: "Byzantine Fault Tolerance",
-  category: "distributed", difficulty: "Advanced",
+  category: ["distributed"], difficulty: "advanced",
   timeComplexity: "O(n²)", spaceComplexity: "O(n)",
   description: "Tolerates up to f Byzantine faults with n ≥ 3f+1 nodes (PBFT algorithm).",
+  relatedTopics: [],
   pythonCode: `# PBFT: Practical Byzantine Fault Tolerance
 # Tolerates f faults with n >= 3f+1 replicas
 
@@ -145,11 +148,11 @@ class PBFTReplica:
 # 3 phases: PRE-PREPARE → PREPARE → COMMIT
 # f = (n-1)//3  max Byzantine faults`,
   codeSteps: [
-    { line: 5, description: "Primary broadcasts PRE-PREPARE with request digest" },
-    { line: 9, description: "Backups broadcast PREPARE to all replicas" },
-    { line: 11, description: "Wait for 2f PREPARE messages → prepared" },
-    { line: 14, description: "Broadcast COMMIT to all" },
-    { line: 16, description: "Execute after 2f+1 COMMIT messages" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 11, highlightLines: [11] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 16, highlightLines: [16] },
   ],
   defaultInput: 4,
   generateSteps(n) {
@@ -168,9 +171,10 @@ class PBFTReplica:
 // ─── Two-Phase Commit ─────────────────────────────────────────────────────────
 export const twoPhaseCommitModule: VisualizationModule<number> = {
   id: "two-phase-commit", slug: "two-phase-commit", title: "Two-Phase Commit",
-  category: "distributed", difficulty: "Intermediate",
+  category: ["distributed"], difficulty: "intermediate",
   timeComplexity: "O(n)", spaceComplexity: "O(n)",
   description: "Coordinator ensures all-or-nothing commit across distributed participants.",
+  relatedTopics: [],
   pythonCode: `class Coordinator:
     def two_phase_commit(self, transaction, participants):
         # Phase 1: Prepare
@@ -190,11 +194,11 @@ export const twoPhaseCommitModule: VisualizationModule<number> = {
                 p.abort()
             return 'ABORTED'`,
   codeSteps: [
-    { line: 3, description: "Phase 1: coordinator asks each participant to prepare" },
-    { line: 5, description: "Participant locks resources and votes YES/NO" },
-    { line: 8, description: "All YES → decide COMMIT" },
-    { line: 10, description: "Phase 2: send COMMIT to all" },
-    { line: 14, description: "Any NO → decide ABORT" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: 3,
   generateSteps(participants) {
@@ -212,9 +216,10 @@ export const twoPhaseCommitModule: VisualizationModule<number> = {
 // ─── Leader-Follower Replication ─────────────────────────────────────────────
 export const leaderFollowerModule: VisualizationModule<number> = {
   id: "leader-follower", slug: "leader-follower", title: "Leader-Follower Replication",
-  category: "distributed", difficulty: "Intermediate",
+  category: ["distributed"], difficulty: "intermediate",
   timeComplexity: "O(1) write, O(1) read", spaceComplexity: "O(n)",
   description: "Single leader handles writes; followers replicate and serve reads.",
+  relatedTopics: [],
   pythonCode: `class LeaderFollower:
     def write(self, key, value):
         # Only leader handles writes
@@ -237,11 +242,11 @@ export const leaderFollowerModule: VisualizationModule<number> = {
         new_leader = max(self.followers, key=lambda f: f.log_index)
         new_leader.become_leader()`,
   codeSteps: [
-    { line: 2, description: "All writes go to leader" },
-    { line: 5, description: "Leader replicates to all followers" },
-    { line: 10, description: "Strong reads from leader (no stale data)" },
-    { line: 13, description: "Eventual reads from any follower (may be stale)" },
-    { line: 17, description: "Failover: follower with latest log becomes leader" },
+    { stepNumber: 2, highlightLines: [2] },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 13, highlightLines: [13] },
+    { stepNumber: 17, highlightLines: [17] },
   ],
   defaultInput: 3,
   generateSteps(followers) {
@@ -259,9 +264,10 @@ export const leaderFollowerModule: VisualizationModule<number> = {
 // ─── Multi-Leader Replication ─────────────────────────────────────────────────
 export const multiLeaderModule: VisualizationModule<number> = {
   id: "multi-leader", slug: "multi-leader", title: "Multi-Leader Replication",
-  category: "distributed", difficulty: "Advanced",
+  category: ["distributed"], difficulty: "advanced",
   timeComplexity: "O(1) write", spaceComplexity: "O(n)",
   description: "Multiple nodes accept writes; conflicts resolved via LWW or CRDTs.",
+  relatedTopics: [],
   pythonCode: `# Multi-leader replication with Last-Write-Wins conflict resolution
 import time
 
@@ -285,11 +291,11 @@ class MultiLeader:
         for node, cnt in remote_state.items():
             self.counters[node] = max(self.counters[node], cnt)`,
   codeSteps: [
-    { line: 5, description: "Each write stamped with timestamp" },
-    { line: 8, description: "Async replication to other leader nodes" },
-    { line: 12, description: "Conflict: Last-Write-Wins resolution" },
-    { line: 16, description: "Alternative: CRDTs guarantee convergence" },
-    { line: 18, description: "G-Counter: merge by taking max" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 16, highlightLines: [16] },
+    { stepNumber: 18, highlightLines: [18] },
   ],
   defaultInput: 2,
   generateSteps(leaders) {
@@ -307,9 +313,10 @@ class MultiLeader:
 // ─── Quorum ───────────────────────────────────────────────────────────────────
 export const quorumModule: VisualizationModule<{n:number,r:number,w:number}> = {
   id: "quorum", slug: "quorum", title: "Quorum (R+W > N)",
-  category: "distributed", difficulty: "Intermediate",
+  category: ["distributed"], difficulty: "intermediate",
   timeComplexity: "O(1)", spaceComplexity: "O(n)",
   description: "Ensure overlap between read and write sets: R + W > N guarantees consistency.",
+  relatedTopics: [],
   pythonCode: `# Quorum-based replication
 # N = total replicas, W = write quorum, R = read quorum
 
@@ -330,10 +337,10 @@ class QuorumSystem:
         # Return version with highest version number
         return max(responses, key=lambda x: x.version)`,
   codeSteps: [
-    { line: 4, description: "R=3, W=3, N=5 → R+W=6 > N=5 ✓" },
-    { line: 7, description: "Write to W replicas with version number" },
-    { line: 12, description: "Read from R replicas" },
-    { line: 14, description: "Return response with highest version" },
+    { stepNumber: 4, highlightLines: [4] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: {n:5, r:3, w:3},
   generateSteps({n, r, w}) {
@@ -353,9 +360,10 @@ class QuorumSystem:
 // ─── Round Robin LB ───────────────────────────────────────────────────────────
 export const roundRobinLbModule: VisualizationModule<number> = {
   id: "round-robin-lb", slug: "round-robin-lb", title: "Round Robin Load Balancing",
-  category: "distributed", difficulty: "Beginner",
+  category: ["distributed"], difficulty: "beginner",
   timeComplexity: "O(1)", spaceComplexity: "O(n)",
   description: "Distributes requests cyclically across servers regardless of load.",
+  relatedTopics: [],
   pythonCode: `class RoundRobinLB:
     def __init__(self, servers):
         self.servers = servers
@@ -374,10 +382,10 @@ servers = ['S0', 'S1', 'S2']
 lb = RoundRobinLB(servers)
 # Requests: R0→S0, R1→S1, R2→S2, R3→S0, ...`,
   codeSteps: [
-    { line: 3, description: "List of backend servers" },
-    { line: 6, description: "Pick current server" },
-    { line: 7, description: "Advance index cyclically" },
-    { line: 11, description: "Route request to selected server" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 6, highlightLines: [6] },
+    { stepNumber: 7, highlightLines: [7] },
+    { stepNumber: 11, highlightLines: [11] },
   ],
   defaultInput: 3,
   generateSteps(servers) {
@@ -395,9 +403,10 @@ lb = RoundRobinLB(servers)
 // ─── Consistent Hashing ───────────────────────────────────────────────────────
 export const consistentHashingModule: VisualizationModule<number> = {
   id: "consistent-hashing", slug: "consistent-hashing", title: "Consistent Hashing",
-  category: "distributed", difficulty: "Intermediate",
+  category: ["distributed"], difficulty: "intermediate",
   timeComplexity: "O(log n)", spaceComplexity: "O(n)",
   description: "Map nodes and keys to a ring; adding/removing nodes remaps only ~k/n keys.",
+  relatedTopics: [],
   pythonCode: `import hashlib, bisect
 
 class ConsistentHash:
@@ -427,11 +436,11 @@ class ConsistentHash:
     def hash(self, key):
         return int(hashlib.md5(key.encode()).hexdigest(), 16) % (2**32)`,
   codeSteps: [
-    { line: 5, description: "Hash ring: position → node mapping" },
-    { line: 8, description: "Add node with virtual replicas (100 positions)" },
-    { line: 14, description: "Remove node: only remaps ~k/n keys" },
-    { line: 18, description: "Route key: walk clockwise to next node" },
-    { line: 21, description: "Wrap around: ring is circular" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 18, highlightLines: [18] },
+    { stepNumber: 21, highlightLines: [21] },
   ],
   defaultInput: 3,
   generateSteps(nodeCount) {
@@ -452,9 +461,10 @@ class ConsistentHash:
 // ─── Least Connections LB ─────────────────────────────────────────────────────
 export const leastConnectionsModule: VisualizationModule<number> = {
   id: "least-connections", slug: "least-connections", title: "Least Connections LB",
-  category: "distributed", difficulty: "Beginner",
+  category: ["distributed"], difficulty: "beginner",
   timeComplexity: "O(n)", spaceComplexity: "O(n)",
   description: "Routes each request to the server with the fewest active connections.",
+  relatedTopics: [],
   pythonCode: `import heapq
 
 class LeastConnectionsLB:
@@ -476,10 +486,10 @@ class LeastConnectionsLB:
                 heapq.heapify(self.heap)
                 break`,
   codeSteps: [
-    { line: 5, description: "Min-heap ordered by active connection count" },
-    { line: 8, description: "Pop server with fewest connections" },
-    { line: 9, description: "Increment count and push back" },
-    { line: 12, description: "On completion: decrement and re-heapify" },
+    { stepNumber: 5, highlightLines: [5] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 12, highlightLines: [12] },
   ],
   defaultInput: 3,
   generateSteps(servers) {
@@ -501,9 +511,10 @@ class LeastConnectionsLB:
 // ─── Weighted Round Robin ─────────────────────────────────────────────────────
 export const weightedRoundRobinModule: VisualizationModule<number[]> = {
   id: "weighted-round-robin", slug: "weighted-round-robin", title: "Weighted Round Robin",
-  category: "distributed", difficulty: "Intermediate",
+  category: ["distributed"], difficulty: "intermediate",
   timeComplexity: "O(W) per cycle", spaceComplexity: "O(n·W)",
   description: "Routes more requests to higher-capacity servers based on assigned weights.",
+  relatedTopics: [],
   pythonCode: `def weighted_round_robin(servers, weights):
     # Expand: each server repeated by weight
     pool = []
@@ -523,9 +534,9 @@ export const weightedRoundRobinModule: VisualizationModule<number[]> = {
 # Example: S0 weight=3, S1 weight=1, S2 weight=2
 # Pool: [S0,S0,S0, S1, S2,S2]`,
   codeSteps: [
-    { line: 3, description: "Expand pool: each server repeated weight times" },
-    { line: 10, description: "Pick from expanded pool cyclically" },
-    { line: 14, description: "S0 w=3 gets 50% traffic, S2 w=2 gets 33%" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 10, highlightLines: [10] },
+    { stepNumber: 14, highlightLines: [14] },
   ],
   defaultInput: [3,1,2],
   generateSteps(weights) {
@@ -544,9 +555,10 @@ export const weightedRoundRobinModule: VisualizationModule<number[]> = {
 // ─── MapReduce ────────────────────────────────────────────────────────────────
 export const mapreduceModule: VisualizationModule<string[]> = {
   id: "mapreduce", slug: "mapreduce", title: "MapReduce",
-  category: "distributed", difficulty: "Intermediate",
+  category: ["distributed"], difficulty: "intermediate",
   timeComplexity: "O(n/p + k log k)", spaceComplexity: "O(n/p)",
   description: "Parallel computation: Map emits (key,val) pairs; Reduce aggregates by key.",
+  relatedTopics: [],
   pythonCode: `# Word count with MapReduce
 
 def mapper(document):
@@ -572,11 +584,11 @@ def word_count(documents):
         grouped.setdefault(k, []).append(v)
     return [reducer(k, vs) for k, vs in grouped.items()]`,
   codeSteps: [
-    { line: 3, description: "Mapper: emit (key, value) pairs from each chunk" },
-    { line: 8, description: "Reducer: aggregate all values for a key" },
-    { line: 12, description: "Framework splits input and distributes to mappers" },
-    { line: 14, description: "Shuffle: sort and group by key" },
-    { line: 16, description: "Reducer processes each key's values" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 8, highlightLines: [8] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 14, highlightLines: [14] },
+    { stepNumber: 16, highlightLines: [16] },
   ],
   defaultInput: ["hello world","hello spark","world of maps"],
   generateSteps(docs) {
@@ -597,9 +609,10 @@ def word_count(documents):
 // ─── Saga Pattern ─────────────────────────────────────────────────────────────
 export const sagaPatternModule: VisualizationModule<number> = {
   id: "saga-pattern", slug: "saga-pattern", title: "Saga Pattern",
-  category: "distributed", difficulty: "Advanced",
+  category: ["distributed"], difficulty: "advanced",
   timeComplexity: "O(n)", spaceComplexity: "O(n)",
   description: "Manage distributed transactions via a sequence of local transactions with compensating rollbacks.",
+  relatedTopics: [],
   pythonCode: `class OrderSaga:
     steps = [
         ('reserve_inventory', 'cancel_inventory'),
@@ -624,10 +637,10 @@ export const sagaPatternModule: VisualizationModule<number> = {
     def charge_payment(self, o):    ...
     def refund_payment(self, o):    ...`,
   codeSteps: [
-    { line: 2, description: "Each step has a forward and compensating action" },
-    { line: 9, description: "Execute steps sequentially, track completed" },
-    { line: 12, description: "On failure: run compensating transactions in reverse" },
-    { line: 18, description: "Each service has its own local transaction" },
+    { stepNumber: 2, highlightLines: [2] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 18, highlightLines: [18] },
   ],
   defaultInput: 3,
   generateSteps(steps) {
@@ -650,9 +663,10 @@ export const sagaPatternModule: VisualizationModule<number> = {
 // ─── Event Sourcing ───────────────────────────────────────────────────────────
 export const eventSourcingModule: VisualizationModule<string[]> = {
   id: "event-sourcing", slug: "event-sourcing", title: "Event Sourcing",
-  category: "distributed", difficulty: "Intermediate",
+  category: ["distributed"], difficulty: "intermediate",
   timeComplexity: "O(n) replay", spaceComplexity: "O(n)",
   description: "Store all state changes as immutable events; current state = replay of all events.",
+  relatedTopics: [],
   pythonCode: `from dataclasses import dataclass, field
 from typing import List
 import time
@@ -684,10 +698,10 @@ events = [
     Event('MoneyWithdrawn', {'id':1, 'amount':30}),
 ]`,
   codeSteps: [
-    { line: 12, description: "Append-only event log (never mutate)" },
-    { line: 15, description: "Replay: fold events to compute current state" },
-    { line: 17, description: "Apply each event to state (reduce)" },
-    { line: 22, description: "Events are immutable facts about what happened" },
+    { stepNumber: 12, highlightLines: [12] },
+    { stepNumber: 15, highlightLines: [15] },
+    { stepNumber: 17, highlightLines: [17] },
+    { stepNumber: 22, highlightLines: [22] },
   ],
   defaultInput: ["AccountOpened:bal=0","Deposit:+100","Deposit:+50","Withdraw:-30"],
   generateSteps(events) {
@@ -708,9 +722,10 @@ events = [
 // ─── CQRS ─────────────────────────────────────────────────────────────────────
 export const cqrsModule: VisualizationModule<string> = {
   id: "cqrs", slug: "cqrs", title: "CQRS",
-  category: "distributed", difficulty: "Intermediate",
+  category: ["distributed"], difficulty: "intermediate",
   timeComplexity: "O(1) write, O(1) read", spaceComplexity: "O(n)",
   description: "Command Query Responsibility Segregation: separate write model from read model.",
+  relatedTopics: [],
   pythonCode: `# CQRS: separate command (write) and query (read) models
 
 class CommandHandler:
@@ -735,9 +750,9 @@ class Projector:
         elif isinstance(event, OrderUpdated):
             self.read_db.update('orders_view', event.to_dict())`,
   codeSteps: [
-    { line: 3, description: "CommandHandler: processes writes → emits events" },
-    { line: 9, description: "QueryHandler: optimized read model (separate DB)" },
-    { line: 13, description: "Projector: updates read model from event stream" },
+    { stepNumber: 3, highlightLines: [3] },
+    { stepNumber: 9, highlightLines: [9] },
+    { stepNumber: 13, highlightLines: [13] },
   ],
   defaultInput: "Order Service",
   generateSteps(service) {
