@@ -2,17 +2,15 @@
 
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { LogIn, LogOut, Moon, Search, Sun } from "lucide-react";
-import { useState } from "react";
+import { LogIn, Moon, Search, Sun } from "lucide-react";
+import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
 
-import { useAuth } from "@/components/auth/AuthContext";
 import { useTheme } from "@/components/theme/ThemeContext";
 import { Input } from "@/components/ui/input";
 
 export function Header() {
-  const { user, openAuth, signOut } = useAuth();
-  const { theme, toggle }           = useTheme();
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const { theme, toggle } = useTheme();
+  const { isSignedIn } = useUser();
 
   return (
     <header
@@ -38,6 +36,7 @@ export function Header() {
 
       {/* Right controls */}
       <div className="flex items-center gap-2">
+
         {/* Search */}
         <div className="relative hidden w-52 sm:block">
           <Search className="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-500" />
@@ -60,7 +59,7 @@ export function Header() {
               <motion.span
                 key="sun"
                 initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
-                animate={{ rotate: 0,   opacity: 1, scale: 1,
+                animate={{ rotate: 0, opacity: 1, scale: 1,
                   transition: { type: "spring", damping: 18, stiffness: 340 } }}
                 exit={{ rotate: 90, opacity: 0, scale: 0.5,
                   transition: { duration: 0.12 } }}
@@ -71,8 +70,8 @@ export function Header() {
             ) : (
               <motion.span
                 key="moon"
-                initial={{ rotate:  90, opacity: 0, scale: 0.5 }}
-                animate={{ rotate: 0,   opacity: 1, scale: 1,
+                initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                animate={{ rotate: 0, opacity: 1, scale: 1,
                   transition: { type: "spring", damping: 18, stiffness: 340 } }}
                 exit={{ rotate: -90, opacity: 0, scale: 0.5,
                   transition: { duration: 0.12 } }}
@@ -84,65 +83,33 @@ export function Header() {
           </AnimatePresence>
         </motion.button>
 
-        {/* Auth */}
-        {user ? (
-          <div className="relative">
+        {/* Auth — Clerk handles everything */}
+        {isSignedIn ? (
+          /* Signed in: avatar + dropdown (profile, account, sign-out) */
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "h-8 w-8 rounded-lg ring-1 ring-white/10",
+              },
+            }}
+          />
+        ) : (
+          /* Signed out: open Clerk's sign-in modal */
+          <SignInButton mode="modal">
             <motion.button
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
-              onClick={() => setShowUserMenu((v) => !v)}
-              className="flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold hover:bg-zinc-800 transition"
+              className="h-8 flex items-center gap-1.5 rounded-lg border px-4 text-xs font-semibold transition"
+              style={{
+                borderColor: "var(--accent-glow)",
+                backgroundColor: "color-mix(in srgb, var(--accent) 10%, transparent)",
+                color: "var(--accent-hover)",
+              }}
             >
-              <div
-                className="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                style={{ background: "var(--accent)" }}
-              >
-                {user.name[0].toUpperCase()}
-              </div>
-              <span className="hidden sm:block">{user.name}</span>
+              <LogIn className="h-3.5 w-3.5" />
+              Sign in
             </motion.button>
-
-            <AnimatePresence>
-              {showUserMenu && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8,  scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0,   scale: 1,
-                    transition: { type: "spring", damping: 22, stiffness: 320 } }}
-                  exit={{ opacity: 0, y: -6, scale: 0.95,
-                    transition: { duration: 0.15 } }}
-                  className="absolute right-0 top-10 w-44 rounded-xl border border-white/8 shadow-2xl overflow-hidden z-50"
-                  style={{ background: "var(--panel-solid)" }}
-                  onMouseLeave={() => setShowUserMenu(false)}
-                >
-                  <div className="px-3 py-2 border-b border-white/5">
-                    <p className="text-xs font-semibold truncate">{user.name}</p>
-                    <p className="text-[10px] text-zinc-500 truncate">{user.email}</p>
-                  </div>
-                  <button
-                    onClick={() => { signOut(); setShowUserMenu(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-zinc-400 hover:text-rose-400 hover:bg-rose-500/5 transition"
-                  >
-                    <LogOut className="h-3.5 w-3.5" /> Sign out
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        ) : (
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={openAuth}
-            className="h-8 flex items-center gap-1.5 rounded-lg border px-4 text-xs font-semibold transition"
-            style={{
-              borderColor: "var(--accent-glow)",
-              backgroundColor: "color-mix(in srgb, var(--accent) 10%, transparent)",
-              color: "var(--accent-hover)",
-            }}
-          >
-            <LogIn className="h-3.5 w-3.5" />
-            Sign in
-          </motion.button>
+          </SignInButton>
         )}
       </div>
     </header>

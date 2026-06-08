@@ -1,12 +1,15 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+/**
+ * AuthContext — thin bridge between Clerk and the rest of the app.
+ *
+ * Every component that calls `useAuth()` continues to work unchanged.
+ * Clerk handles the real session; this context just exposes the same
+ * interface the app already expects.
+ */
+
+import { createContext, useCallback, useContext, useState } from "react";
+import { useUser, useClerk } from "@clerk/nextjs";
 
 export interface AuthUser {
   name: string;
@@ -28,42 +31,45 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { user: clerkUser, isLoaded } = useUser();
+  const { openSignIn, signOut: clerkSignOut } = useClerk();
+
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [newsletterSubscribed, setNewsletterSubscribedState] = useState(false);
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("algoverse_user");
-      if (stored) setUser(JSON.parse(stored) as AuthUser);
-      if (localStorage.getItem("algoverse_newsletter") === "true") {
-        setNewsletterSubscribedState(true);
-      }
-    } catch {
-      // localStorage unavailable (SSR guard)
-    }
-  }, []);
+  // Map Clerk user → our AuthUser shape
+  const user: AuthUser | null =
+    isLoaded && clerkUser
+      ? {
+          name:
+            clerkUser.fullName ??
+            clerkUser.firstName ??
+            clerkUser.emailAddresses[0]?.emailAddress.split("@")[0] ??
+            "User",
+          email: clerkUser.emailAddresses[0]?.emailAddress ?? "",
+        }
+      : null;
 
-  const openAuth = useCallback(() => setIsAuthOpen(true), []);
+  // openAuth → opens Clerk's hosted sign-in
+  const openAuth = useCallback(() => {
+    openSignIn();
+  }, [openSignIn]);
+
   const closeAuth = useCallback(() => setIsAuthOpen(false), []);
 
-  const signInWithEmail = useCallback((email: string, name: string) => {
-    const next: AuthUser = { email, name };
-    setUser(next);
-    try {
-      localStorage.setItem("algoverse_user", JSON.stringify(next));
-    } catch {}
-    setIsAuthOpen(false);
-  }, []);
+  // Legacy stub — kept so nothing breaks, delegates to Clerk
+  const signInWithEmail = useCallback(
+    (_email: string, _name: string) => {
+      openSignIn();
+    },
+    [openSignIn],
+  );
 
   const continueAsGuest = useCallback(() => setIsAuthOpen(false), []);
 
   const signOut = useCallback(() => {
-    setUser(null);
-    try {
-      localStorage.removeItem("algoverse_user");
-    } catch {}
-  }, []);
+    void clerkSignOut();
+  }, [clerkSignOut]);
 
   const setNewsletterSubscribed = useCallback((val: boolean) => {
     setNewsletterSubscribedState(val);

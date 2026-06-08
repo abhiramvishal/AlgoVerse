@@ -1,6 +1,5 @@
 "use client";
 
-import { AuthModal } from "./AuthModal";
 import { AuthProvider } from "./AuthContext";
 import { ThemeProvider } from "@/components/theme/ThemeContext";
 
@@ -9,7 +8,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
     <ThemeProvider>
       <AuthProvider>
         {children}
-        <AuthModal />
+        {/* AuthModal removed — Clerk handles sign-in UI natively */}
       </AuthProvider>
     </ThemeProvider>
   );
