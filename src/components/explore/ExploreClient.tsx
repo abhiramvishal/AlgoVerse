@@ -1,9 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BarChart2, Braces, Code2 } from "lucide-react";
+import { BarChart2 } from "lucide-react";
 
 import { BottomBar } from "@/components/common/BottomBar";
 import { CodePanel } from "@/components/code/CodePanel";
@@ -23,20 +23,11 @@ interface ExploreClientProps {
 
 function parseInputFromQuery(raw: string | null): unknown | null {
   if (!raw) return null;
-  // Try JSON first (handles objects, arrays, numbers, strings)
   try { return JSON.parse(raw); } catch { /* fall through */ }
-  // Legacy: comma-separated numbers
   const parsed = raw.split(",").map((t) => Number(t.trim()));
   if (parsed.length && !parsed.some(Number.isNaN)) return parsed;
   return null;
 }
-
-type RightTab = "code" | "variables";
-
-const RIGHT_TABS: { id: RightTab; label: string; icon: React.ReactNode }[] = [
-  { id: "code",      label: "Code",      icon: <Code2  className="h-3.5 w-3.5" /> },
-  { id: "variables", label: "Variables", icon: <Braces className="h-3.5 w-3.5" /> },
-];
 
 const SPRING = { type: "spring" as const, damping: 26, stiffness: 340, mass: 0.7 };
 
@@ -74,7 +65,6 @@ export function ExploreClient({ initialSlug = "bubble-sort" }: ExploreClientProp
     const p = new URLSearchParams();
     p.set("step", String(currentStepIndex));
     if (input !== null && input !== undefined) {
-      // Compact: plain number arrays stay comma-separated for readability
       if (Array.isArray(input) && (input as unknown[]).every((v) => typeof v === "number")) {
         p.set("input", (input as number[]).join(","));
       } else {
@@ -84,11 +74,10 @@ export function ExploreClient({ initialSlug = "bubble-sort" }: ExploreClientProp
     router.replace(`/explore/${cat}/${vm.slug}?${p.toString()}`, { scroll: false });
   }, [currentStepIndex, input, vm, router]);
 
-  const [rightTab, setRightTab] = useState<RightTab>("code");
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isPlaceholder = (currentStep?.visualState as any)?.state === "placeholder";
 
+  /* ── Loading state ── */
   if (!vm || !currentStep) {
     return (
       <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -109,148 +98,126 @@ export function ExploreClient({ initialSlug = "bubble-sort" }: ExploreClientProp
     <div className="flex h-screen flex-col bg-background text-foreground overflow-hidden">
       <Header />
 
-      {/* Horizontal category + algorithm navigation */}
+      {/* Category + algorithm nav (collapsible row 2) */}
       <CategoryNav activeSlug={vm.slug} />
 
-      {/* Main layout — two-column for full algorithms, single-column for placeholders */}
+      {/* ── 3-column main layout ── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
-        {/* ── Left: Visualization panel (hidden for placeholders) ── */}
-        {!isPlaceholder && (
-          <div className="flex flex-col min-h-0 flex-[1.25] border-r border-white/5">
-
-            {/* Algorithm header */}
-            <div className="flex items-start justify-between px-5 py-3 border-b border-white/5 shrink-0 gap-4">
-              <div className="min-w-0">
-                <h1 className="text-base font-semibold text-white leading-tight">{vm.title}</h1>
-                <p className="text-xs text-zinc-500 mt-0.5 truncate">{vm.description}</p>
-              </div>
-              <div className="shrink-0">
-                <ComplexityBadge
-                  timeComplexity={vm.timeComplexity}
-                  spaceComplexity={vm.spaceComplexity}
-                />
-              </div>
+        {/* ══ LEFT: Code panel ══ */}
+        <div className="w-[290px] shrink-0 flex flex-col min-h-0 border-r border-white/5">
+          {/* Algorithm title + complexity */}
+          <div className="px-4 py-3 border-b border-white/5 shrink-0 space-y-1">
+            <div className="flex items-start justify-between gap-2">
+              <h1 className="text-sm font-semibold text-white leading-tight flex-1 min-w-0 truncate">
+                {vm.title}
+              </h1>
             </div>
-
-            {/* Input + Controls inline row */}
-            <div className="flex items-center gap-3 px-5 py-3 border-b border-white/5 shrink-0">
-              <div className="flex-1 min-w-0">
-                <InputPanel
-                  defaultInput={vm.defaultInput}
-                  input={input}
-                  onApplyInput={(next: unknown) => {
-                    setInput(next);
-                    setCurrentStepIndex(0);
-                    setIsPlaying(false);
-                  }}
-                />
-              </div>
-              <div className="shrink-0">
-                <Controls
-                  isPlaying={isPlaying}
-                  speed={speed}
-                  onPlayPause={() => setIsPlaying((p) => !p)}
-                  onStep={stepForward}
-                  onReset={reset}
-                  onSpeedChange={setSpeed}
-                />
-              </div>
-            </div>
-
-            {/* Visualization canvas — fills remaining space */}
-            <div className="flex-1 min-h-0 p-4 overflow-hidden">
-              <VisualizationCanvas visualState={currentStep.visualState} />
-            </div>
-          </div>
-        )}
-
-        {/* ── Right (or full-width for placeholders): Code / Variables panel ── */}
-        <div className={`flex flex-col min-h-0 ${isPlaceholder ? "flex-1" : "flex-1"}`}>
-
-          {/* Algorithm header for placeholder (shown here since left panel is hidden) */}
-          {isPlaceholder && (
-            <div className="flex items-center gap-4 px-6 py-3 border-b border-white/5 shrink-0">
-              <div className="min-w-0 flex-1">
-                <h1 className="text-base font-semibold text-white leading-tight">{vm.title}</h1>
-                <p className="text-xs text-zinc-500 mt-0.5">{vm.description}</p>
-              </div>
+            <p className="text-[11px] text-zinc-500 leading-snug line-clamp-2">{vm.description}</p>
+            <div className="pt-0.5">
               <ComplexityBadge
                 timeComplexity={vm.timeComplexity}
                 spaceComplexity={vm.spaceComplexity}
               />
-              <span className="shrink-0 rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 text-[10px] font-semibold text-amber-400">
-                Visualization coming soon
+            </div>
+          </div>
+
+          {/* Code panel — scrolls internally */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <CodePanel
+              code={vm.pythonCode}
+              highlightLines={isPlaceholder ? [] : currentStep.highlightLines}
+            />
+          </div>
+
+          {/* Step counter at bottom */}
+          {!isPlaceholder && (
+            <div className="px-4 py-2 border-t border-white/5 shrink-0 flex items-center justify-between">
+              <span className="text-[10px] font-mono text-zinc-600">
+                Step {currentStep.stepNumber} / {totalSteps}
               </span>
+              <span className="text-[10px] text-zinc-700 capitalize">{vm.difficulty}</span>
             </div>
           )}
+        </div>
 
-          {/* Tab bar — hide Variables tab for placeholders (empty variables) */}
-          <div className="flex items-center gap-1 px-4 py-2 border-b border-white/5 shrink-0">
-            {RIGHT_TABS.filter((t) => !isPlaceholder || t.id === "code").map((tab) => (
-              <motion.button
-                key={tab.id}
-                whileHover={{ backgroundColor: "rgba(255,255,255,0.04)" }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setRightTab(tab.id)}
-                className={`relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  rightTab === tab.id ? "text-indigo-300" : "text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
-                {tab.icon}
-                {tab.label}
-                {rightTab === tab.id && (
-                  <motion.div
-                    layoutId="right-tab-bg"
-                    transition={SPRING}
-                    className="absolute inset-0 rounded-lg bg-indigo-600/15 border border-indigo-500/20"
-                    style={{ zIndex: -1 }}
-                  />
-                )}
-              </motion.button>
-            ))}
+        {/* ══ CENTER: Visualization (dominant) ══ */}
+        <div className="flex-1 min-w-0 flex flex-col min-h-0">
+
+          {/* Compact controls + input bar */}
+          <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/5 shrink-0 flex-wrap gap-y-2">
             {!isPlaceholder && (
-              <div className="ml-auto text-[10px] font-mono text-zinc-600">
-                {currentStep.stepNumber} / {totalSteps}
+              <>
+                <div className="flex-1 min-w-0">
+                  <InputPanel
+                    defaultInput={vm.defaultInput}
+                    input={input}
+                    onApplyInput={(next: unknown) => {
+                      setInput(next);
+                      setCurrentStepIndex(0);
+                      setIsPlaying(false);
+                    }}
+                  />
+                </div>
+                <div className="shrink-0">
+                  <Controls
+                    isPlaying={isPlaying}
+                    speed={speed}
+                    onPlayPause={() => setIsPlaying((p) => !p)}
+                    onStep={stepForward}
+                    onReset={reset}
+                    onSpeedChange={setSpeed}
+                  />
+                </div>
+              </>
+            )}
+            {isPlaceholder && (
+              <div className="flex items-center gap-3 w-full">
+                <h1 className="text-sm font-semibold text-white">{vm.title}</h1>
+                <span className="rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 text-[10px] font-semibold text-amber-400">
+                  Visualization coming soon
+                </span>
+                <div className="ml-auto">
+                  <ComplexityBadge
+                    timeComplexity={vm.timeComplexity}
+                    spaceComplexity={vm.spaceComplexity}
+                  />
+                </div>
               </div>
             )}
           </div>
 
-          {/* Tab content */}
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <AnimatePresence mode="wait" initial={false}>
-              {(isPlaceholder || rightTab === "code") ? (
-                <motion.div
-                  key="code"
-                  className="flex flex-col h-full p-3 gap-3"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0, transition: SPRING }}
-                  exit={{ opacity: 0, y: -4, transition: { duration: 0.1 } }}
-                >
-                  <div className="flex-1 min-h-0">
-                    <CodePanel
-                      code={vm.pythonCode}
-                      highlightLines={isPlaceholder ? [] : currentStep.highlightLines}
-                    />
-                  </div>
-                  {!isPlaceholder && <VariableState variables={currentStep.variables} />}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="variables"
-                  className="h-full p-3 overflow-auto"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0, transition: SPRING }}
-                  exit={{ opacity: 0, y: -4, transition: { duration: 0.1 } }}
-                >
-                  <VariableState variables={currentStep.variables} />
-                </motion.div>
-              )}
-            </AnimatePresence>
+          {/* Visualization canvas — takes all remaining space */}
+          <motion.div
+            key={vm.slug}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: SPRING }}
+            className="flex-1 min-h-0 p-4 overflow-hidden"
+          >
+            <VisualizationCanvas visualState={currentStep.visualState} />
+          </motion.div>
+        </div>
+
+        {/* ══ RIGHT: Variables panel ══ */}
+        <div className="w-[210px] shrink-0 flex flex-col min-h-0 border-l border-white/5">
+          <div className="px-4 py-3 border-b border-white/5 shrink-0">
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Variables
+            </span>
+          </div>
+          <div className="flex-1 min-h-0 overflow-auto p-3">
+            {!isPlaceholder ? (
+              <VariableState variables={currentStep.variables} />
+            ) : (
+              <p className="text-[11px] text-zinc-600 mt-2 px-1 leading-relaxed">
+                Select an algorithm to see variable tracing.
+              </p>
+            )}
           </div>
         </div>
       </div>
 
+      {/* Bottom bar: step description */}
       <BottomBar
         currentStep={currentStep.stepNumber}
         totalSteps={totalSteps}
