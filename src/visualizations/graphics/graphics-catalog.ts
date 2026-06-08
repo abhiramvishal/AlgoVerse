@@ -1,61 +1,652 @@
-import { createPlaceholderModule } from "@/visualizations/placeholder";
+import type { VisualizationModule, AnimationStep } from "@/types/visualization";
 
-// Rasterization
-export const bresenhamLineModule = createPlaceholderModule(
-  "bresenham-line", "bresenham-line", "Bresenham's Line Algorithm",
-  ["computer-graphics", "rasterization"], "intermediate",
-);
-export const bresenhamCircleModule = createPlaceholderModule(
-  "bresenham-circle", "bresenham-circle", "Bresenham's Circle Algorithm",
-  ["computer-graphics", "rasterization"], "intermediate",
-);
-export const scanlineFillModule = createPlaceholderModule(
-  "scanline-fill", "scanline-fill", "Scanline Fill",
-  ["computer-graphics", "rasterization"], "intermediate",
-);
-export const floodFillModule = createPlaceholderModule(
-  "flood-fill", "flood-fill", "Flood Fill",
-  ["computer-graphics", "rasterization"], "beginner",
-);
+function arr(stepNumber: number, description: string, lines: number[], cells: {val: string|number, state: string}[], label: string, vars: Record<string,unknown>): AnimationStep {
+  return { stepNumber, description, highlightLines: lines, visualState: { type: "array1d", cells, label }, variables: vars };
+}
+function mat(stepNumber: number, description: string, lines: number[], matrix: (string|number)[][], rowLabels: string[], colLabels: string[], active: [number,number] | null, title: string, vars: Record<string,unknown>): AnimationStep {
+  return { stepNumber, description, highlightLines: lines, visualState: { type: "matrix", matrix, rowLabels, colLabels, active, highlighted: active ? [active] : [], title }, variables: vars };
+}
 
-// Ray Tracing
-export const raySphereModule = createPlaceholderModule(
-  "ray-sphere", "ray-sphere", "Ray-Sphere Intersection",
-  ["computer-graphics", "ray-tracing"], "advanced",
-);
-export const rayTriangleModule = createPlaceholderModule(
-  "ray-triangle", "ray-triangle", "Ray-Triangle Intersection",
-  ["computer-graphics", "ray-tracing"], "advanced",
-);
-export const shadowRaysModule = createPlaceholderModule(
-  "shadow-rays", "shadow-rays", "Shadow Rays",
-  ["computer-graphics", "ray-tracing"], "advanced",
-);
+// ─── Bresenham's Line Algorithm ───────────────────────────────────────────────
+export const bresenhamLineModule: VisualizationModule<{x1:number,y1:number,x2:number,y2:number}> = {
+  id: "bresenham-line", slug: "bresenham-line", title: "Bresenham's Line Algorithm",
+  category: "graphics", difficulty: "Beginner",
+  timeComplexity: "O(max(dx,dy))", spaceComplexity: "O(1)",
+  description: "Rasterize a line using only integer arithmetic — no floating point needed.",
+  pythonCode: `def bresenham_line(x0, y0, x1, y1):
+    points = []
+    dx = abs(x1 - x0)
+    dy = abs(y1 - y0)
+    sx = 1 if x0 < x1 else -1
+    sy = 1 if y0 < y1 else -1
+    err = dx - dy
+    while True:
+        points.append((x0, y0))
+        if x0 == x1 and y0 == y1:
+            break
+        e2 = 2 * err
+        if e2 > -dy:
+            err -= dy; x0 += sx
+        if e2 < dx:
+            err += dx; y0 += sy
+    return points`,
+  codeSteps: [
+    { line: 2, description: "Compute dx, dy: absolute distances" },
+    { line: 6, description: "err: decision variable (starts at dx-dy)" },
+    { line: 8, description: "Plot current pixel" },
+    { line: 11, description: "e2 = 2*err to compare with dx, dy" },
+    { line: 12, description: "Move in x if e2 > -dy" },
+    { line: 14, description: "Move in y if e2 < dx" },
+  ],
+  defaultInput: {x0:0,y0:0,x1:6,y1:4} as any,
+  generateSteps(input: any) {
+    const {x1=6, y1=4} = input as {x1:number,y1:number};
+    let x=0,y=0,err=x1-y1;
+    const points: [number,number][] = [];
+    while(true) {
+      points.push([x,y]);
+      if(x===x1&&y===y1) break;
+      const e2=2*err;
+      if(e2>-y1){err-=y1;x++;}
+      if(e2<x1){err+=x1;y++;}
+      if(points.length>20) break;
+    }
+    const steps: AnimationStep[] = [];
+    steps.push(arr(1,`Draw line (0,0)→(${x1},${y1})`,[1,2,3,4,5,6],[{val:`dx=${x1}`,state:"default"},{val:`dy=${y1}`,state:"default"},{val:`err=${x1-y1}`,state:"active"}],"Init",{dx:x1,dy:y1}));
+    points.forEach((p,i) => {
+      steps.push(arr(i+2,`Plot (${p[0]},${p[1]})`,[8],points.slice(0,i+1).map(([px,py])=>({val:`(${px},${py})`,state:i===i?"highlighted":"computed"})),"Pixels",{x:p[0],y:p[1]}));
+    });
+    return steps;
+  }
+};
 
-// Transformations
-export const twoDRotationModule = createPlaceholderModule(
-  "2d-rotation", "2d-rotation", "2D Rotation",
-  ["computer-graphics", "transformations"], "beginner",
-);
-export const threeDRotationModule = createPlaceholderModule(
-  "3d-rotation", "3d-rotation", "3D Rotation",
-  ["computer-graphics", "transformations"], "intermediate",
-);
-export const affineTransformationsModule = createPlaceholderModule(
-  "affine-transformations", "affine-transformations", "Affine Transformations",
-  ["computer-graphics", "transformations"], "intermediate",
-);
-export const homogeneousCoordsModule = createPlaceholderModule(
-  "homogeneous-coords", "homogeneous-coords", "Homogeneous Coordinates",
-  ["computer-graphics", "transformations"], "intermediate",
-);
+// ─── Bresenham's Circle ───────────────────────────────────────────────────────
+export const bresenhamCircleModule: VisualizationModule<number> = {
+  id: "bresenham-circle", slug: "bresenham-circle", title: "Bresenham's Circle",
+  category: "graphics", difficulty: "Beginner",
+  timeComplexity: "O(r)", spaceComplexity: "O(r)",
+  description: "Rasterize a circle using midpoint algorithm — 8-way symmetry, integer ops only.",
+  pythonCode: `def bresenham_circle(cx, cy, r):
+    x, y = 0, r
+    d = 3 - 2 * r  # decision parameter
+    points = []
+    while y >= x:
+        # 8-way symmetry: plot 8 octants
+        for (dx, dy) in [(x,y),(y,x),(x,-y),(y,-x),
+                         (-x,y),(-y,x),(-x,-y),(-y,-x)]:
+            points.append((cx+dx, cy+dy))
+        if d < 0:
+            d += 4*x + 6
+        else:
+            d += 4*(x - y) + 10
+            y -= 1
+        x += 1
+    return points`,
+  codeSteps: [
+    { line: 2, description: "Start at (0, r) — top of circle" },
+    { line: 3, description: "Decision parameter d = 3 - 2r" },
+    { line: 6, description: "8-way symmetry: 1 point → 8 octant pixels" },
+    { line: 10, description: "d < 0: midpoint inside, move E" },
+    { line: 12, description: "d ≥ 0: midpoint outside, move SE (decrement y)" },
+  ],
+  defaultInput: 5,
+  generateSteps(r) {
+    const steps: AnimationStep[] = [];
+    let x=0, y=r, d=3-2*r;
+    const pts: [number,number][] = [];
+    while(y>=x) {
+      pts.push([x,y]);
+      if(d<0) d+=4*x+6; else { d+=4*(x-y)+10; y--; }
+      x++;
+      if(pts.length>12) break;
+    }
+    steps.push(arr(1,`Circle r=${r}: start at (0,${r}), d=${3-2*r}`,[1,2,3],[{val:`x=0`,state:"active"},{val:`y=${r}`,state:"active"},{val:`d=${3-2*r}`,state:"computed"}],"Init",{r}));
+    pts.forEach((p,i) => {
+      steps.push(arr(i+2,`(${p[0]},${p[1]}) → 8 pixels via symmetry`,[5,6,7,8],pts.slice(0,i+1).map(([px,py])=>({val:`(${px},${py})`,state:"computed"})).concat([{val:"×8",state:"highlighted"}]),`Octant step ${i+1}`,{x:p[0],y:p[1]}));
+    });
+    return steps;
+  }
+};
 
-// Clipping
-export const cohenSutherlandModule = createPlaceholderModule(
-  "cohen-sutherland", "cohen-sutherland", "Cohen-Sutherland Clipping",
-  ["computer-graphics", "clipping"], "intermediate",
-);
-export const sutherlandHodgmanModule = createPlaceholderModule(
-  "sutherland-hodgman", "sutherland-hodgman", "Sutherland-Hodgman Clipping",
-  ["computer-graphics", "clipping"], "advanced",
-);
+// ─── Scanline Fill ────────────────────────────────────────────────────────────
+export const scanlineFillModule: VisualizationModule<number[][]> = {
+  id: "scanline-fill", slug: "scanline-fill", title: "Scanline Fill",
+  category: "graphics", difficulty: "Intermediate",
+  timeComplexity: "O(n·h)", spaceComplexity: "O(n)",
+  description: "Fill a polygon by scanning horizontal lines and filling between edge intersections.",
+  pythonCode: `def scanline_fill(polygon, color):
+    min_y = min(p[1] for p in polygon)
+    max_y = max(p[1] for p in polygon)
+    for y in range(min_y, max_y + 1):
+        intersections = []
+        n = len(polygon)
+        for i in range(n):
+            x1,y1 = polygon[i]
+            x2,y2 = polygon[(i+1) % n]
+            if y1 <= y < y2 or y2 <= y < y1:
+                # Edge intersection with scanline y
+                t = (y - y1) / (y2 - y1)
+                x = x1 + t * (x2 - x1)
+                intersections.append(x)
+        intersections.sort()
+        for i in range(0, len(intersections), 2):
+            fill_span(intersections[i], intersections[i+1], y, color)`,
+  codeSteps: [
+    { line: 3, description: "Iterate scanlines from min_y to max_y" },
+    { line: 6, description: "Find x-intersections with each polygon edge" },
+    { line: 11, description: "Interpolate x at scanline y" },
+    { line: 14, description: "Sort intersections" },
+    { line: 15, description: "Fill between pairs of intersections" },
+  ],
+  defaultInput: [[0,0],[10,0],[8,6],[5,8],[2,6]],
+  generateSteps(poly) {
+    const ys = poly.map(p=>p[1]);
+    const minY=Math.min(...ys), maxY=Math.max(...ys);
+    const steps: AnimationStep[] = [];
+    steps.push(arr(1,`Polygon with ${poly.length} vertices, scan y=${minY}..${maxY}`,[2,3],poly.map(p=>({val:`(${p[0]},${p[1]})`,state:"active"})),"Polygon",{minY,maxY}));
+    for (let y=minY; y<=maxY; y+=2) {
+      const ints: number[] = [];
+      const n=poly.length;
+      for(let i=0;i<n;i++){
+        const [x1,y1]=poly[i],[x2,y2]=poly[(i+1)%n];
+        if((y1<=y&&y<y2)||(y2<=y&&y<y1)){
+          const t=(y-y1)/(y2-y1);
+          ints.push(x1+t*(x2-x1));
+        }
+      }
+      ints.sort((a,b)=>a-b);
+      if(ints.length>=2) {
+        steps.push(arr(Math.floor(y/2)+2,`Scanline y=${y}: fill x=[${ints[0].toFixed(1)},${ints[1].toFixed(1)}]`,[4,5,6,7,8,9,10,11,12,13,14,15],
+          [{val:`y=${y}`,state:"active"},{val:`x_l=${ints[0].toFixed(1)}`,state:"computed"},{val:`x_r=${ints[1].toFixed(1)}`,state:"computed"},{val:"FILL",state:"highlighted"}],`Scanline y=${y}`,{spans:ints.length/2}));
+      }
+    }
+    return steps;
+  }
+};
+
+// ─── Flood Fill ───────────────────────────────────────────────────────────────
+export const floodFillModule: VisualizationModule<{seed:[number,number],size:number}> = {
+  id: "flood-fill", slug: "flood-fill", title: "Flood Fill",
+  category: "graphics", difficulty: "Beginner",
+  timeComplexity: "O(n)", spaceComplexity: "O(n)",
+  description: "Fill connected region from a seed pixel using BFS or DFS.",
+  pythonCode: `from collections import deque
+
+def flood_fill_bfs(grid, sr, sc, new_color):
+    old_color = grid[sr][sc]
+    if old_color == new_color:
+        return grid
+    queue = deque([(sr, sc)])
+    grid[sr][sc] = new_color
+    while queue:
+        r, c = queue.popleft()
+        for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+            nr, nc = r+dr, c+dc
+            if 0<=nr<len(grid) and 0<=nc<len(grid[0]) and grid[nr][nc]==old_color:
+                grid[nr][nc] = new_color
+                queue.append((nr, nc))
+    return grid`,
+  codeSteps: [
+    { line: 3, description: "Save old color of seed pixel" },
+    { line: 6, description: "BFS queue starting from seed" },
+    { line: 9, description: "Process each pixel in queue" },
+    { line: 10, description: "Check 4-connected neighbors" },
+    { line: 12, description: "If neighbor has old color: paint and enqueue" },
+  ],
+  defaultInput: {seed:[2,2], size:5},
+  generateSteps({seed, size}) {
+    const grid = Array.from({length:size},()=>Array(size).fill(0));
+    // Border
+    for(let i=0;i<size;i++){grid[0][i]=1;grid[size-1][i]=1;grid[i][0]=1;grid[i][size-1]=1;}
+    const steps: AnimationStep[] = [];
+    const flat = grid.flat().map((v,i)=>({val:v===1?"█":" ",state:i===seed[0]*size+seed[1]?"active":"default" as string}));
+    steps.push(arr(1,`Seed=(${seed[0]},${seed[1]}), flood fill interior`,[6,7],flat,"Grid",{seed,size}));
+    const queue: [number,number][] = [seed as [number,number]];
+    const filled: Set<string> = new Set([`${seed[0]},${seed[1]}`]);
+    for(let step=0;step<Math.min(8,size*size);step++) {
+      if(!queue.length) break;
+      const [r,c]=queue.shift()!;
+      [[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([nr,nc])=>{
+        if(nr>=0&&nr<size&&nc>=0&&nc<size&&grid[nr][nc]===0&&!filled.has(`${nr},${nc}`)) {
+          filled.add(`${nr},${nc}`); queue.push([nr,nc]);
+        }
+      });
+      const cells = grid.flat().map((v,i)=>{
+        const ri=Math.floor(i/size),ci=i%size;
+        return {val:v===1?"█":filled.has(`${ri},${ci}`)?"░":" ",state:ri===r&&ci===c?"highlighted":"default" as string};
+      });
+      steps.push(arr(step+2,`Fill (${r},${c}), queue size=${queue.length}`,[9,10,11,12,13,14],cells,`Step ${step+1}`,{filled:filled.size}));
+    }
+    return steps;
+  }
+};
+
+// ─── Ray-Sphere Intersection ──────────────────────────────────────────────────
+export const raySphereModule: VisualizationModule<{radius:number}> = {
+  id: "ray-sphere", slug: "ray-sphere", title: "Ray-Sphere Intersection",
+  category: "graphics", difficulty: "Intermediate",
+  timeComplexity: "O(1)", spaceComplexity: "O(1)",
+  description: "Solve quadratic equation to find ray-sphere intersection points.",
+  pythonCode: `import numpy as np
+
+def ray_sphere(ray_origin, ray_dir, sphere_center, radius):
+    oc = ray_origin - sphere_center
+    a = np.dot(ray_dir, ray_dir)
+    b = 2 * np.dot(oc, ray_dir)
+    c = np.dot(oc, oc) - radius**2
+    discriminant = b**2 - 4*a*c
+    if discriminant < 0:
+        return None              # no intersection
+    sqrt_d = np.sqrt(discriminant)
+    t1 = (-b - sqrt_d) / (2*a)  # near intersection
+    t2 = (-b + sqrt_d) / (2*a)  # far intersection
+    if t1 > 0: return t1
+    if t2 > 0: return t2
+    return None
+
+def shade(t, ray, normal, light):
+    hit = ray.origin + t * ray.dir
+    diffuse = max(0, np.dot(normalize(normal(hit)), light))
+    return diffuse`,
+  codeSteps: [
+    { line: 4, description: "oc = ray_origin - sphere_center" },
+    { line: 5, description: "a, b, c: quadratic coefficients" },
+    { line: 7, description: "discriminant = b² - 4ac" },
+    { line: 9, description: "discriminant < 0: ray misses sphere" },
+    { line: 11, description: "Two intersection t-values (near and far)" },
+    { line: 13, description: "Return nearest positive t" },
+  ],
+  defaultInput: {radius: 3},
+  generateSteps({radius}) {
+    const steps: AnimationStep[] = [];
+    const oc=[3,0,0], rd=[-1,0,0];
+    const a=1, b=2*(oc[0]*rd[0]), c=oc[0]**2-radius**2;
+    const disc=b**2-4*a*c;
+    const t1=(-b-Math.sqrt(disc))/(2*a), t2=(-b+Math.sqrt(disc))/(2*a);
+    steps.push(arr(1,"Ray from (3,0,0) direction (-1,0,0) toward sphere",[3,4],[{val:"origin=(3,0,0)",state:"active"},{val:"dir=(-1,0,0)",state:"active"}],"Ray",{radius}));
+    steps.push(arr(2,`Compute oc, quadratic coefficients a=${a},b=${b.toFixed(1)},c=${c.toFixed(1)}`,[4,5,6],[{val:`a=${a}`,state:"computed"},{val:`b=${b.toFixed(1)}`,state:"computed"},{val:`c=${c.toFixed(1)}`,state:"computed"}],"Quadratic",{}));
+    steps.push(arr(3,`Discriminant = ${disc.toFixed(2)} > 0 → 2 intersections`,[7,8],[{val:`disc=${disc.toFixed(2)}`,state:"highlighted"},{val:"2 hits",state:"active"}],"Discriminant",{disc:disc.toFixed(2)}));
+    steps.push(arr(4,`t1=${t1.toFixed(2)} (near), t2=${t2.toFixed(2)} (far)`,[11,12],[{val:`t1=${t1.toFixed(2)}`,state:"highlighted"},{val:`t2=${t2.toFixed(2)}`,state:"computed"}],"Intersections",{near:t1.toFixed(2),far:t2.toFixed(2)}));
+    steps.push(arr(5,"Return t1 (nearest hit); compute normal at hit point",[13,17,18],[{val:`hit=(${(3+t1).toFixed(2)},0,0)`,state:"highlighted"},{val:"shade→pixel",state:"computed"}],"Shading",{t:t1.toFixed(2)}));
+    return steps;
+  }
+};
+
+// ─── Ray-Triangle Intersection ────────────────────────────────────────────────
+export const rayTriangleModule: VisualizationModule<string> = {
+  id: "ray-triangle", slug: "ray-triangle", title: "Ray-Triangle Intersection",
+  category: "graphics", difficulty: "Intermediate",
+  timeComplexity: "O(1)", spaceComplexity: "O(1)",
+  description: "Möller–Trumbore algorithm for ray-triangle intersection in O(1).",
+  pythonCode: `import numpy as np
+
+def moller_trumbore(ray_origin, ray_dir, v0, v1, v2, eps=1e-7):
+    e1 = v1 - v0
+    e2 = v2 - v0
+    h  = np.cross(ray_dir, e2)
+    a  = np.dot(e1, h)
+    if abs(a) < eps:
+        return None  # ray parallel to triangle
+    f = 1.0 / a
+    s = ray_origin - v0
+    u = f * np.dot(s, h)
+    if u < 0 or u > 1:
+        return None  # outside triangle
+    q = np.cross(s, e1)
+    v = f * np.dot(ray_dir, q)
+    if v < 0 or u+v > 1:
+        return None
+    t = f * np.dot(e2, q)
+    return t if t > eps else None`,
+  codeSteps: [
+    { line: 4, description: "Edge vectors e1=v1-v0, e2=v2-v0" },
+    { line: 6, description: "h = cross(ray_dir, e2)" },
+    { line: 7, description: "a = dot(e1, h): denominator" },
+    { line: 10, description: "Compute barycentric coordinate u" },
+    { line: 13, description: "u outside [0,1]: miss" },
+    { line: 16, description: "Compute v and check u+v ≤ 1" },
+    { line: 18, description: "Return t (distance along ray)" },
+  ],
+  defaultInput: "Möller-Trumbore",
+  generateSteps(_) {
+    const steps: AnimationStep[] = [];
+    steps.push(arr(1,"Triangle v0=(0,0,0), v1=(1,0,0), v2=(0,1,0)",[3],[{val:"v0",state:"active"},{val:"v1",state:"active"},{val:"v2",state:"active"}],"Triangle",{}));
+    steps.push(arr(2,"Compute edge vectors e1 and e2",[4,5],[{val:"e1=(1,0,0)",state:"computed"},{val:"e2=(0,1,0)",state:"computed"}],"Edges",{}));
+    steps.push(arr(3,"h=cross(dir,e2), a=dot(e1,h)",[6,7],[{val:"h=(0,0,-1)",state:"computed"},{val:"a=1.0",state:"highlighted"}],"Determinant",{parallel:false}));
+    steps.push(arr(4,"Compute u=0.25, v=0.25 (inside triangle!)",[10,11,14,15],[{val:"u=0.25",state:"highlighted"},{val:"v=0.25",state:"highlighted"},{val:"u+v=0.5≤1",state:"computed"}],"Barycentric",{u:0.25,v:0.25}));
+    steps.push(arr(5,"t=5.0 → hit point (0.25, 0.25, 0)",[18],[{val:"t=5.0",state:"highlighted"},{val:"HIT",state:"highlighted"}],"Intersection",{t:5.0}));
+    return steps;
+  }
+};
+
+// ─── Shadow Rays ──────────────────────────────────────────────────────────────
+export const shadowRaysModule: VisualizationModule<number> = {
+  id: "shadow-rays", slug: "shadow-rays", title: "Shadow Rays",
+  category: "graphics", difficulty: "Intermediate",
+  timeComplexity: "O(n) per pixel", spaceComplexity: "O(1)",
+  description: "Cast secondary rays toward lights; occluded pixels are in shadow.",
+  pythonCode: `def shade_point(hit, normal, lights, scene):
+    color = ambient_color * Ka
+    for light in lights:
+        # Direction to light
+        L = normalize(light.pos - hit)
+        dist = length(light.pos - hit)
+        # Cast shadow ray
+        shadow_ray = Ray(hit + eps*normal, L)
+        occluder = scene.intersect(shadow_ray)
+        if occluder and occluder.t < dist:
+            continue  # in shadow, skip this light
+        # Diffuse (Lambertian)
+        NdotL = max(0, dot(normal, L))
+        color += light.color * Kd * NdotL
+        # Specular (Phong)
+        R = reflect(-L, normal)
+        VdotR = max(0, dot(-ray_dir, R))
+        color += light.color * Ks * VdotR**shininess
+    return color`,
+  codeSteps: [
+    { line: 3, description: "Start with ambient term" },
+    { line: 5, description: "Compute direction to each light" },
+    { line: 7, description: "Cast shadow ray from hit point toward light" },
+    { line: 8, description: "If occluder closer than light → in shadow" },
+    { line: 11, description: "Diffuse: Lambertian shading N·L" },
+    { line: 14, description: "Specular: Phong highlight" },
+  ],
+  defaultInput: 2,
+  generateSteps(lights) {
+    const steps: AnimationStep[] = [];
+    steps.push(arr(1,`Hit point: shoot ${lights} shadow ray(s) toward lights`,[3],[{val:"ambient",state:"default"},{val:`${lights} lights`,state:"active"}],"Shading",{lights}));
+    for(let i=0;i<lights;i++){
+      steps.push(arr(i+2,`Light ${i}: cast shadow ray`,[7,8],[{val:`L${i}_dir`,state:"active"},{val:"shadow_ray",state:"computed"}],"Shadow ray",{light:i}));
+      const occluded=i===0;
+      steps.push(arr(i+lights+2,`Light ${i}: ${occluded?"SHADOW (occluded)":"illuminated"}`,[9,10],[{val:`L${i}`,state:occluded?"highlighted":"active"},{val:occluded?"shadow":"lit",state:occluded?"active":"highlighted"}],`Shadow test`,{occluded}));
+    }
+    steps.push(arr(2*lights+2,"Sum diffuse+specular from unoccluded lights",[11,12,13,14,15,16],[{val:"diffuse",state:"computed"},{val:"specular",state:"computed"},{val:"final_color",state:"highlighted"}],"Final color",{}));
+    return steps;
+  }
+};
+
+// ─── 2D Rotation ─────────────────────────────────────────────────────────────
+export const twoDRotationModule: VisualizationModule<{angle:number,points:number[][]}> = {
+  id: "2d-rotation", slug: "2d-rotation", title: "2D Rotation",
+  category: "graphics", difficulty: "Beginner",
+  timeComplexity: "O(n)", spaceComplexity: "O(n)",
+  description: "Rotate 2D points about origin using 2×2 rotation matrix.",
+  pythonCode: `import numpy as np, math
+
+def rotate_2d(points, angle_deg):
+    theta = math.radians(angle_deg)
+    R = np.array([
+        [math.cos(theta), -math.sin(theta)],
+        [math.sin(theta),  math.cos(theta)]
+    ])
+    return [R @ p for p in points]
+
+# Rotate about arbitrary pivot (cx, cy):
+def rotate_about(points, angle_deg, cx, cy):
+    pts = [(x-cx, y-cy) for x,y in points]
+    rotated = rotate_2d(pts, angle_deg)
+    return [(x+cx, y+cy) for x,y in rotated]`,
+  codeSteps: [
+    { line: 3, description: "Convert degrees to radians" },
+    { line: 4, description: "2×2 rotation matrix R(θ)" },
+    { line: 8, description: "Apply R to each point" },
+    { line: 11, description: "Pivot: translate to origin, rotate, translate back" },
+  ],
+  defaultInput: {angle:45, points:[[1,0],[0,1],[-1,0],[0,-1]]},
+  generateSteps({angle, points}) {
+    const theta=angle*Math.PI/180;
+    const cos=Math.cos(theta), sin=Math.sin(theta);
+    const rotated=points.map(([x,y])=>[(x*cos-y*sin),(x*sin+y*cos)]);
+    const steps: AnimationStep[] = [];
+    steps.push(arr(1,`Rotate ${points.length} points by ${angle}°`,[3,4,5,6,7],points.map(([x,y])=>({val:`(${x},${y})`,state:"active"})),"Original",{angle}));
+    steps.push(arr(2,`R(${angle}°): cos=${cos.toFixed(2)}, sin=${sin.toFixed(2)}`,[4,5,6,7],[{val:`[${cos.toFixed(2)}, -${sin.toFixed(2)}]`,state:"computed"},{val:`[${sin.toFixed(2)},  ${cos.toFixed(2)}]`,state:"computed"}],"Rotation matrix",{}));
+    rotated.forEach(([x,y],i) => {
+      steps.push(arr(i+3,`Point ${i}: R·(${points[i][0]},${points[i][1]}) = (${x.toFixed(2)},${y.toFixed(2)})`,[8],[{val:`(${x.toFixed(2)},${y.toFixed(2)})`,state:"highlighted"}],`Rotated ${i}`,{original:points[i],rotated:[x.toFixed(2),y.toFixed(2)]}));
+    });
+    return steps;
+  }
+};
+
+// ─── 3D Rotation ─────────────────────────────────────────────────────────────
+export const threeDRotationModule: VisualizationModule<{ax:number,ay:number,az:number}> = {
+  id: "3d-rotation", slug: "3d-rotation", title: "3D Rotation",
+  category: "graphics", difficulty: "Intermediate",
+  timeComplexity: "O(n)", spaceComplexity: "O(n)",
+  description: "Rotate 3D points using Euler angles (Rx, Ry, Rz) or quaternions.",
+  pythonCode: `import numpy as np, math
+
+def Rx(a): c,s=math.cos(a),math.sin(a); return np.array([[1,0,0],[0,c,-s],[0,s,c]])
+def Ry(a): c,s=math.cos(a),math.sin(a); return np.array([[c,0,s],[0,1,0],[-s,0,c]])
+def Rz(a): c,s=math.cos(a),math.sin(a); return np.array([[c,-s,0],[s,c,0],[0,0,1]])
+
+def euler_rotate(point, ax, ay, az):
+    return Rz(az) @ Ry(ay) @ Rx(ax) @ point
+
+# Quaternion rotation (avoids gimbal lock)
+def quat_rotate(point, axis, angle):
+    q = np.array([math.cos(angle/2), *[math.sin(angle/2)*a for a in axis]])
+    p = np.array([0, *point])
+    q_conj = np.array([q[0], -q[1], -q[2], -q[3]])
+    return quat_mul(quat_mul(q, p), q_conj)[1:]`,
+  codeSteps: [
+    { line: 3, description: "Rx: rotation matrix about X axis" },
+    { line: 4, description: "Ry: rotation matrix about Y axis" },
+    { line: 5, description: "Rz: rotation matrix about Z axis" },
+    { line: 7, description: "Combine: Rz·Ry·Rx·point (order matters!)" },
+    { line: 10, description: "Quaternion: avoids gimbal lock" },
+    { line: 11, description: "q = cos(θ/2) + sin(θ/2)·axis" },
+  ],
+  defaultInput: {ax:30,ay:45,az:0},
+  generateSteps({ax,ay,az}) {
+    const r=(d:number)=>d*Math.PI/180;
+    const point=[1,0,0];
+    // Apply Rx
+    const afterRx=[point[0],point[1]*Math.cos(r(ax))-point[2]*Math.sin(r(ax)),point[1]*Math.sin(r(ax))+point[2]*Math.cos(r(ax))];
+    // Apply Ry
+    const afterRy=[afterRx[0]*Math.cos(r(ay))+afterRx[2]*Math.sin(r(ay)),afterRx[1],-afterRx[0]*Math.sin(r(ay))+afterRx[2]*Math.cos(r(ay))];
+    const steps: AnimationStep[] = [];
+    steps.push(arr(1,`Rotate (1,0,0) by Rx=${ax}°, Ry=${ay}°, Rz=${az}°`,[7],[{val:"(1,0,0)",state:"active"}],"Original",{ax,ay,az}));
+    steps.push(arr(2,`Apply Rx(${ax}°)`,[3],[{val:`(${afterRx.map(v=>v.toFixed(2)).join(",")})`,state:"computed"}],"After Rx",{ax}));
+    steps.push(arr(3,`Apply Ry(${ay}°)`,[4],[{val:`(${afterRy.map(v=>v.toFixed(2)).join(",")})`,state:"computed"}],"After Ry",{ay}));
+    steps.push(arr(4,"Final rotated point",[7],[{val:`(${afterRy.map(v=>v.toFixed(2)).join(",")})`,state:"highlighted"}],"Result",{euler:[ax,ay,az]}));
+    steps.push(arr(5,"Alternative: quaternion (no gimbal lock)",[10,11,12,13],[{val:"q=[cos,sin·axis]",state:"computed"},{val:"avoids gimbal lock",state:"active"}],"Quaternion",{}));
+    return steps;
+  }
+};
+
+// ─── Affine Transformations ───────────────────────────────────────────────────
+export const affineTransformationsModule: VisualizationModule<string> = {
+  id: "affine-transformations", slug: "affine-transformations", title: "Affine Transformations",
+  category: "graphics", difficulty: "Intermediate",
+  timeComplexity: "O(n)", spaceComplexity: "O(1)",
+  description: "Translate, scale, rotate, and shear using 3×3 matrices in homogeneous coords.",
+  pythonCode: `import numpy as np
+
+# Homogeneous 2D transformations (3x3 matrices)
+def translate(tx, ty):
+    return np.array([[1,0,tx],[0,1,ty],[0,0,1]])
+
+def scale(sx, sy):
+    return np.array([[sx,0,0],[0,sy,0],[0,0,1]])
+
+def rotate(theta):
+    c,s = np.cos(theta), np.sin(theta)
+    return np.array([[c,-s,0],[s,c,0],[0,0,1]])
+
+def shear(hx, hy):
+    return np.array([[1,hx,0],[hy,1,0],[0,0,1]])
+
+# Compose transformations: T * R * S
+def transform(points, matrices):
+    M = np.eye(3)
+    for mat in matrices:
+        M = mat @ M
+    # Apply M to each point (homogeneous)
+    return [M @ np.array([x, y, 1]) for x,y in points]`,
+  codeSteps: [
+    { line: 3, description: "translate: shifts by (tx, ty)" },
+    { line: 6, description: "scale: multiplies coordinates" },
+    { line: 9, description: "rotate: rotation matrix" },
+    { line: 13, description: "shear: slants along axis" },
+    { line: 16, description: "Compose: multiply matrices right-to-left" },
+  ],
+  defaultInput: "TRS",
+  generateSteps(_) {
+    const steps: AnimationStep[] = [];
+    const pt=[2,1];
+    steps.push(arr(1,"Original point (2,1)",[3],[ {val:`(${pt.join(",")})`,state:"active"}],"Point",{}));
+    const s=[3,2,1];
+    steps.push(arr(2,"Scale(2,2): (2,1) → (4,2)",[6,7],[{val:"S=[2,0;0,2;0,0,1]",state:"computed"},{val:"(4,2)",state:"highlighted"}],"After Scale",{sx:2,sy:2}));
+    steps.push(arr(3,"Rotate(45°): (4,2) → (2.83,4.24)",[9,10,11],[{val:"R=...",state:"computed"},{val:"(2.83,4.24)",state:"highlighted"}],"After Rotate",{theta:"45°"}));
+    steps.push(arr(4,"Translate(1,1): → (3.83,5.24)",[3,4,5],[{val:"T=[1,0,1;0,1,1;0,0,1]",state:"computed"},{val:"(3.83,5.24)",state:"highlighted"}],"After Translate",{}));
+    steps.push(arr(5,"Composition: T·R·S applied in one matrix multiply",[16,17,18,19,20],[{val:"M=T·R·S",state:"highlighted"},{val:"1 multiply",state:"active"}],"TRS composed",{efficient:true}));
+    return steps;
+  }
+};
+
+// ─── Homogeneous Coordinates ──────────────────────────────────────────────────
+export const homogeneousCoordsModule: VisualizationModule<string> = {
+  id: "homogeneous-coords", slug: "homogeneous-coords", title: "Homogeneous Coordinates",
+  category: "graphics", difficulty: "Intermediate",
+  timeComplexity: "O(1)", spaceComplexity: "O(1)",
+  description: "Unify translation, rotation, and projection in a single matrix multiplication.",
+  pythonCode: `import numpy as np
+
+# 2D: (x,y) → (x,y,1) in homogeneous form
+# Allows translation as matrix multiplication
+
+def to_homogeneous(p): return np.array([*p, 1.0])
+def from_homogeneous(p): return p[:2] / p[2]  # perspective divide
+
+# Perspective projection (3D→2D)
+def perspective_matrix(fov, aspect, near, far):
+    f = 1 / np.tan(fov/2)
+    return np.array([
+        [f/aspect, 0,  0,                    0],
+        [0,        f,  0,                    0],
+        [0,        0,  (far+near)/(near-far), 2*far*near/(near-far)],
+        [0,        0, -1,                    0]
+    ])
+
+# Project 3D point to clip coords
+def project(p3d, M):
+    h = M @ to_homogeneous(p3d)
+    return from_homogeneous(h)  # divide by w`,
+  codeSteps: [
+    { line: 6, description: "Add w=1 for affine transforms; w≠1 for projective" },
+    { line: 7, description: "Perspective divide: (x,y,z,w) → (x/w, y/w)" },
+    { line: 9, description: "Perspective matrix encodes FOV and depth range" },
+    { line: 19, description: "Project 3D point: multiply then divide by w" },
+  ],
+  defaultInput: "Perspective",
+  generateSteps(_) {
+    const steps: AnimationStep[] = [];
+    steps.push(arr(1,"2D point (3,2) → homogeneous (3,2,1)",[6],[{val:"(3,2)",state:"active"},{val:"→(3,2,1)",state:"computed"}],"Homogeneous 2D",{w:1}));
+    steps.push(arr(2,"Translation via matrix: no special case needed",[6],[{val:"T·(3,2,1)",state:"computed"},{val:"=(5,4,1)",state:"highlighted"}],"Translate",{tx:2,ty:2}));
+    steps.push(arr(3,"3D point (1,2,5) → (1,2,5,1)",[6],[{val:"(1,2,5)",state:"active"},{val:"→(1,2,5,1)",state:"computed"}],"Homogeneous 3D",{w:1}));
+    steps.push(arr(4,"Perspective matrix M multiplied",[9,10,11,12,13,14,15],[{val:"M·(1,2,5,1)",state:"computed"},{val:"=(0.2,0.4,-1.2,−5)",state:"computed"}],"Clip space",{}));
+    steps.push(arr(5,"Perspective divide: /w → NDC (-0.04,-0.08)",[7,20,21],[{val:"÷w=-5",state:"active"},{val:"NDC=(-0.04,-0.08)",state:"highlighted"}],"NDC",{perspective:true}));
+    return steps;
+  }
+};
+
+// ─── Cohen-Sutherland Clipping ────────────────────────────────────────────────
+export const cohenSutherlandModule: VisualizationModule<{x1:number,y1:number,x2:number,y2:number}> = {
+  id: "cohen-sutherland", slug: "cohen-sutherland", title: "Cohen-Sutherland Clipping",
+  category: "graphics", difficulty: "Intermediate",
+  timeComplexity: "O(1)", spaceComplexity: "O(1)",
+  description: "Clip line segments to a rectangular viewport using region outcodes.",
+  pythonCode: `INSIDE=0; LEFT=1; RIGHT=2; BOTTOM=4; TOP=8
+
+def outcode(x, y, xmin, xmax, ymin, ymax):
+    code = INSIDE
+    if   x < xmin: code |= LEFT
+    elif x > xmax: code |= RIGHT
+    if   y < ymin: code |= BOTTOM
+    elif y > ymax: code |= TOP
+    return code
+
+def cohen_sutherland(x0,y0,x1,y1, xmin,xmax,ymin,ymax):
+    c0, c1 = outcode(x0,y0,...), outcode(x1,y1,...)
+    while True:
+        if not (c0 | c1):    return (x0,y0,x1,y1)  # trivially accept
+        if c0 & c1:          return None             # trivially reject
+        c = c0 if c0 else c1
+        if c & TOP:    y = ymax; x = x0+(x1-x0)*(ymax-y0)/(y1-y0)
+        elif c & BOTTOM: y = ymin; x = x0+(x1-x0)*(ymin-y0)/(y1-y0)
+        elif c & RIGHT:  x = xmax; y = y0+(y1-y0)*(xmax-x0)/(x1-x0)
+        elif c & LEFT:   x = xmin; y = y0+(y1-y0)*(xmin-x0)/(x1-x0)
+        if c == c0: x0,y0,c0 = x,y,outcode(x,y,...)
+        else:       x1,y1,c1 = x,y,outcode(x,y,...)`,
+  codeSteps: [
+    { line: 2, description: "outcode: 4-bit region code for each endpoint" },
+    { line: 11, description: "If OR=0: line fully inside, accept" },
+    { line: 12, description: "If AND≠0: line fully outside, reject" },
+    { line: 13, description: "Clip against the boundary the outsider violates" },
+    { line: 18, description: "Update endpoint and recompute its outcode" },
+  ],
+  defaultInput: {x1:-5,y1:3,x2:8,y2:7} as any,
+  generateSteps(input: any) {
+    const {x1=-5,y1=3,x2=8,y2=7}=input;
+    const steps: AnimationStep[] = [];
+    const viewport={xmin:0,xmax:5,ymin:0,ymax:5};
+    const oc=(x:number,y:number)=>{let c=0;if(x<0)c|=1;if(x>5)c|=2;if(y<0)c|=4;if(y>5)c|=8;return c;};
+    const c0=oc(x1,y1),c1=oc(x2,y2);
+    steps.push(arr(1,`Line (${x1},${y1})→(${x2},${y2}), viewport [0..5]x[0..5]`,[1],[{val:`c0=${c0.toString(2).padStart(4,'0')}`,state:"active"},{val:`c1=${c1.toString(2).padStart(4,'0')}`,state:"active"}],"Outcodes",{viewport}));
+    steps.push(arr(2,`c0|c1=${(c0|c1).toString(2)} ≠ 0 → not trivially inside`,[11],[{val:`OR=${c0|c1}`,state:"computed"},{val:`AND=${c0&c1}`,state:"computed"}],"Check",{accept:false,reject:c0&c1!==0}));
+    steps.push(arr(3,`c0=${c0}: endpoint (${x1},${y1}) is LEFT of viewport`,[13,14],[{val:`clip LEFT`,state:"active"},{val:"intersect x=0",state:"computed"}],"Clip LEFT",{boundary:"x=0"}));
+    steps.push(arr(4,"New endpoint at (0, 4.2) — recompute outcode",[18],[{val:"(0,4.2)",state:"highlighted"},{val:"c0=0000",state:"computed"}],"Updated p0",{inside:true}));
+    steps.push(arr(5,"Both inside → ACCEPT clipped segment",[11],[{val:"accept",state:"highlighted"},{val:"(0,4.2)→(5,5.8)",state:"highlighted"}],"Clipped line",{result:"accepted"}));
+    return steps;
+  }
+};
+
+// ─── Sutherland-Hodgman Clipping ──────────────────────────────────────────────
+export const sutherlandHodgmanModule: VisualizationModule<number[][]> = {
+  id: "sutherland-hodgman", slug: "sutherland-hodgman", title: "Sutherland-Hodgman Clipping",
+  category: "graphics", difficulty: "Advanced",
+  timeComplexity: "O(n·c)", spaceComplexity: "O(n)",
+  description: "Clip a polygon against each viewport edge in turn (handles concave polygons).",
+  pythonCode: `def sutherland_hodgman(polygon, clip_rect):
+    output = list(polygon)
+    xmin,xmax,ymin,ymax = clip_rect
+    for edge in ['left','right','bottom','top']:
+        if not output: break
+        input_list = output
+        output = []
+        for i in range(len(input_list)):
+            curr = input_list[i]
+            prev = input_list[i-1]
+            if inside(curr, edge, clip_rect):
+                if not inside(prev, edge, clip_rect):
+                    output.append(intersect(prev, curr, edge, clip_rect))
+                output.append(curr)
+            elif inside(prev, edge, clip_rect):
+                output.append(intersect(prev, curr, edge, clip_rect))
+    return output`,
+  codeSteps: [
+    { line: 3, description: "Process polygon against each clip edge" },
+    { line: 7, description: "For each polygon edge (vertex pair)" },
+    { line: 9, description: "curr inside, prev outside: add intersection + curr" },
+    { line: 12, description: "curr outside, prev inside: add only intersection" },
+  ],
+  defaultInput: [[1,1],[4,0],[5,3],[3,5],[0,4]],
+  generateSteps(poly) {
+    const steps: AnimationStep[] = [];
+    const cells = poly.map(p=>({val:`(${p[0]},${p[1]})`,state:"active" as string}));
+    steps.push(arr(1,`Clip ${poly.length}-gon against rectangle [0..4]x[0..4]`,[1,2],cells,"Input polygon",{vertices:poly.length}));
+    steps.push(arr(2,"Clip against LEFT edge (x=0): all inside",[3,4,5,6],cells.map(c=>({...c,state:"computed" as string})),"After LEFT clip",{removed:0}));
+    steps.push(arr(3,"Clip against RIGHT edge (x=4): clip vertex (5,3)",[3,7,8,9,10],cells.map((c,i)=>({...c,state:i===2?"highlighted":"computed" as string})),"After RIGHT clip",{clipped:1}));
+    steps.push(arr(4,"Clip against BOTTOM (y=0): clip vertex (4,0)",[3,7],cells.map((c,i)=>({...c,state:i===1?"highlighted":"computed" as string})),"After BOTTOM clip",{clipped:1}));
+    steps.push(arr(5,"Clip against TOP (y=4): final polygon",[3,7],cells.map(c=>({...c,state:"highlighted" as string})).slice(0,4),"Clipped polygon",{vertices:4}));
+    return steps;
+  }
+};
+
+export const graphicsModules = [
+  bresenhamLineModule, bresenhamCircleModule, scanlineFillModule, floodFillModule,
+  raySphereModule, rayTriangleModule, shadowRaysModule,
+  twoDRotationModule, threeDRotationModule, affineTransformationsModule,
+  homogeneousCoordsModule, cohenSutherlandModule, sutherlandHodgmanModule,
+];

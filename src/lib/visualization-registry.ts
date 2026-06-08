@@ -13,47 +13,65 @@ import { singlyLinkedListModule } from "@/visualizations/data-structures/linked-
 import { stackQueueModule } from "@/visualizations/data-structures/stacks-queues/stack-queue";
 import { binarySearchTreeModule } from "@/visualizations/data-structures/trees/binary-search-tree";
 
-// ── Sorting catalog ──────────────────────────────────────────────────────────
-import {
-  selectionSortModule, insertionSortModule, shellSortModule, heapSortModule,
-  countingSortModule, radixSortModule, bucketSortModule, timSortModule,
-  introSortModule, cycleSortModule,
-} from "@/visualizations/algorithms/sorting/sorting-catalog";
+// ── Sorting (individual implementations) ─────────────────────────────────────
+import { selectionSortModule } from "@/visualizations/algorithms/sorting/selection-sort";
+import { insertionSortModule } from "@/visualizations/algorithms/sorting/insertion-sort";
+import { shellSortModule } from "@/visualizations/algorithms/sorting/shell-sort";
+import { heapSortModule } from "@/visualizations/algorithms/sorting/heap-sort";
+import { countingSortModule } from "@/visualizations/algorithms/sorting/counting-sort";
+import { radixSortModule } from "@/visualizations/algorithms/sorting/radix-sort";
+import { bucketSortModule } from "@/visualizations/algorithms/sorting/bucket-sort";
+import { cycleSortModule } from "@/visualizations/algorithms/sorting/cycle-sort";
+import { timSortModule } from "@/visualizations/algorithms/sorting/tim-sort";
+import { introSortModule } from "@/visualizations/algorithms/sorting/intro-sort";
 
-// ── Searching catalog ────────────────────────────────────────────────────────
-import {
-  linearSearchAlgModule, binarySearchAlgModule, jumpSearchModule,
-  interpolationSearchModule, exponentialSearchModule, ternarySearchModule,
-  fibonacciSearchModule,
-} from "@/visualizations/algorithms/searching/searching-catalog";
+// ── Searching (individual implementations) ────────────────────────────────────
+import { linearSearchAlgModule } from "@/visualizations/algorithms/searching/linear-search-alg";
+import { binarySearchAlgModule } from "@/visualizations/algorithms/searching/binary-search-alg";
+import { jumpSearchModule } from "@/visualizations/algorithms/searching/jump-search";
+import { interpolationSearchModule } from "@/visualizations/algorithms/searching/interpolation-search";
+import { exponentialSearchModule } from "@/visualizations/algorithms/searching/exponential-search";
+import { ternarySearchModule } from "@/visualizations/algorithms/searching/ternary-search";
+import { fibonacciSearchModule } from "@/visualizations/algorithms/searching/fibonacci-search";
 
-// ── Graph algorithms catalog ─────────────────────────────────────────────────
+// ── Graph (individual implementations) ───────────────────────────────────────
+import { bellmanFordModule } from "@/visualizations/algorithms/graph/bellman-ford";
+import { kruskalModule } from "@/visualizations/algorithms/graph/kruskal";
+import { primModule } from "@/visualizations/algorithms/graph/prim";
+import { topologicalSortModule } from "@/visualizations/algorithms/graph/topological-sort";
 import {
-  bellmanFordModule, floydWarshallModule, aStarModule, johnsonsModule,
-  kruskalModule, primModule, boruvkaModule, topologicalSortModule,
+  floydWarshallModule, aStarModule, johnsonsModule,
+  boruvkaModule,
   kahnsAlgorithmModule, tarjanSccModule, kosarajuSccModule, fordFulkersonModule,
   edmondsKarpModule, bipartiteCheckModule, cycleDetectionGraphModule,
   eulerPathModule, articulationPointsModule, bridgesGraphModule,
 } from "@/visualizations/algorithms/graph/graph-catalog";
 
-// ── Dynamic Programming catalog ──────────────────────────────────────────────
+// ── DP (individual implementations) ──────────────────────────────────────────
+import { fibonacciDpModule } from "@/visualizations/algorithms/dp/fibonacci-dp";
+import { coinChangeModule } from "@/visualizations/algorithms/dp/coin-change";
+import { lcsModule } from "@/visualizations/algorithms/dp/lcs";
+import { knapsack01Module } from "@/visualizations/algorithms/dp/knapsack-01";
+import { lisModule } from "@/visualizations/algorithms/dp/lis";
 import {
-  fibonacciDpModule, coinChangeModule, knapsack01Module, unboundedKnapsackModule,
-  lcsModule, lisModule, editDistanceModule, matrixChainModule, uniquePathsModule,
+  unboundedKnapsackModule, editDistanceModule, matrixChainModule, uniquePathsModule,
   minPathSumModule, wordBreakDpModule, palindromePartitionDpModule, rodCuttingModule,
   eggDropModule, tspDpModule, sosDpModule,
 } from "@/visualizations/algorithms/dp/dp-catalog";
 
-// ── Greedy catalog ───────────────────────────────────────────────────────────
+// ── Greedy (individual implementations) ──────────────────────────────────────
+import { activitySelectionModule } from "@/visualizations/algorithms/greedy/activity-selection";
+import { huffmanCodingModule } from "@/visualizations/algorithms/greedy/huffman-coding";
 import {
-  activitySelectionModule, jobSchedulingModule, huffmanCodingModule,
+  jobSchedulingModule,
   fractionalKnapsackModule, egyptianFractionModule, minimumPlatformsModule,
   gasStationModule,
 } from "@/visualizations/algorithms/greedy/greedy-catalog";
 
-// ── Backtracking catalog ─────────────────────────────────────────────────────
+// ── Backtracking (individual implementations) ─────────────────────────────────
+import { nQueensModule } from "@/visualizations/algorithms/backtracking/n-queens";
 import {
-  nQueensModule, sudokuSolverModule, permutationsBtModule, combinationsBtModule,
+  sudokuSolverModule, permutationsBtModule, combinationsBtModule,
   subsetsBtModule, wordSearchBtModule, ratInMazeModule, graphColoringModule,
   hamiltonianPathModule,
 } from "@/visualizations/algorithms/backtracking/backtracking-catalog";
@@ -64,15 +82,18 @@ import {
   fastFourierTransformModule,
 } from "@/visualizations/algorithms/divide-conquer/dc-catalog";
 
-// ── String algorithms catalog ────────────────────────────────────────────────
+// ── String (individual implementations) ──────────────────────────────────────
+import { kmpModule } from "@/visualizations/algorithms/string/kmp";
 import {
-  kmpModule, rabinKarpModule, boyerMooreModule, zAlgorithmModule,
+  rabinKarpModule, boyerMooreModule, zAlgorithmModule,
   ahoCorasickModule, manacherModule, suffixArrayModule, suffixTreeModule,
 } from "@/visualizations/algorithms/string/string-catalog";
 
-// ── Mathematical catalog ─────────────────────────────────────────────────────
+// ── Math (individual implementations) ────────────────────────────────────────
+import { gcdEuclideanModule } from "@/visualizations/algorithms/math/gcd-euclidean";
+import { sieveEratosthenesModule } from "@/visualizations/algorithms/math/sieve-eratosthenes";
 import {
-  gcdEuclideanModule, extendedEuclideanModule, sieveEratosthenesModule,
+  extendedEuclideanModule,
   segmentedSieveModule, fastExponentiationModule, chineseRemainderModule,
   millerRabinModule, pollardRhoModule,
 } from "@/visualizations/algorithms/math/math-catalog";
@@ -95,6 +116,9 @@ import {
   monteCarloPiModule, lasVegasModule,
 } from "@/visualizations/algorithms/randomized/randomized-catalog";
 
+// ── Data Structures (individual heap implementations) ────────────────────────
+import { maxHeapModule } from "@/visualizations/data-structures/heaps/max-heap";
+import { minHeapModule } from "@/visualizations/data-structures/heaps/min-heap";
 // ── Data Structures catalog ──────────────────────────────────────────────────
 import {
   linearSearchModule, twoPointersModule, slidingWindowModule, kadaneModule,
@@ -104,15 +128,19 @@ import {
   hashTableLinearProbingModule, hashTableQuadraticProbingModule, hashTableDoubleHashingModule,
   avlTreeModule, redBlackTreeModule, bTreeModule, trieModule,
   segmentTreeModule, fenwickTreeModule, splayTreeModule,
-  minHeapModule, maxHeapModule, fibonacciHeapModule,
+  fibonacciHeapModule,
   adjacencyListModule, adjacencyMatrixModule, edgeListModule,
   unionFindModule, lruCacheModule, lfuCacheModule,
   bloomFilterModule, lsmTreeModule, ropeDsModule,
 } from "@/visualizations/data-structures/ds-catalog";
 
+// ── OS (individual implementations) ──────────────────────────────────────────
+import { fcfsModule } from "@/visualizations/os/fcfs";
+import { sjfModule } from "@/visualizations/os/sjf";
+import { roundRobinModule } from "@/visualizations/os/round-robin";
 // ── OS catalog ───────────────────────────────────────────────────────────────
 import {
-  fcfsModule, sjfModule, srtfModule, roundRobinModule, prioritySchedulingModule,
+  srtfModule, prioritySchedulingModule,
   multilevelQueueModule, multilevelFeedbackModule,
   pagingModule, segmentationModule, virtualMemoryModule, buddySystemModule,
   fifoPageModule, lruPageModule, optimalPageModule, clockPageModule, nfuPageModule,

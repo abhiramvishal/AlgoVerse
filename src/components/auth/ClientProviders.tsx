@@ -2,12 +2,15 @@
 
 import { AuthModal } from "./AuthModal";
 import { AuthProvider } from "./AuthContext";
+import { ThemeProvider } from "@/components/theme/ThemeContext";
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      {children}
-      <AuthModal />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        {children}
+        <AuthModal />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   description: "Interactive computer science visualizations with synced code.",
 };
 
+/* Anti-flash: runs sync before React hydrates */
+const themeScript = `(function(){try{var t=localStorage.getItem('algoverse_theme');document.documentElement.classList.add(t==='light'?'light':'dark')}catch(e){document.documentElement.classList.add('dark')}})()`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,9 +29,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-200">
         <ClientProviders>{children}</ClientProviders>
       </body>
     </html>

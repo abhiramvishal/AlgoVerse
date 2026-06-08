@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Pause, Play, RotateCcw, StepForward } from "lucide-react";
+import { Pause, Play, RotateCcw, StepForward } from "lucide-react";
 
 import { Slider } from "@/components/ui/slider";
 
@@ -15,73 +15,47 @@ interface ControlsProps {
 }
 
 export function Controls({
-  isPlaying,
-  speed,
-  onPlayPause,
-  onStep,
-  onReset,
-  onSpeedChange,
+  isPlaying, speed, onPlayPause, onStep, onReset, onSpeedChange,
 }: ControlsProps) {
   return (
-    <div className="space-y-4 rounded-2xl border border-white/5 bg-zinc-950/40 p-4 shadow-lg backdrop-blur-md">
-      <div className="flex items-center gap-2">
-        <Activity className="h-4 w-4 text-indigo-400" />
-        <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-          Simulation Controls
-        </span>
-      </div>
+    <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-zinc-950/40 px-3 py-2 shadow backdrop-blur-md">
+      <motion.button
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
+        onClick={onPlayPause}
+        className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.35)] hover:shadow-[0_0_16px_rgba(99,102,241,0.5)] transition-shadow"
+        aria-label={isPlaying ? "Pause" : "Play"}
+      >
+        {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+      </motion.button>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {/* Play / Pause */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={onPlayPause}
-          className="flex flex-1 min-w-[100px] h-9 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-xs font-semibold shadow-[0_0_15px_rgba(99,102,241,0.25)] hover:shadow-[0_0_20px_rgba(99,102,241,0.45)] transition-shadow"
-        >
-          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          {isPlaying ? "Pause" : "Play"}
-        </motion.button>
+      <motion.button
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
+        onClick={onStep}
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/8 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 hover:text-white transition"
+        aria-label="Step forward"
+      >
+        <StepForward className="h-3.5 w-3.5" />
+      </motion.button>
 
-        {/* Step */}
-        <motion.button
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
-          onClick={onStep}
-          className="h-9 flex items-center justify-center gap-1.5 rounded-xl px-4 border border-white/5 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-200 text-xs font-semibold transition"
-        >
-          <StepForward className="h-4 w-4" />
-          Step
-        </motion.button>
+      <motion.button
+        whileHover={{ scale: 1.08, rotate: -30 }}
+        whileTap={{ scale: 0.9 }}
+        transition={{ type: "spring" as const, damping: 18, stiffness: 380 }}
+        onClick={onReset}
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/8 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
+        aria-label="Reset"
+      >
+        <RotateCcw className="h-3.5 w-3.5" />
+      </motion.button>
 
-        {/* Reset */}
-        <motion.button
-          whileHover={{ scale: 1.08, rotate: -30 }}
-          whileTap={{ scale: 0.9 }}
-          transition={{ type: "spring", damping: 18, stiffness: 360 }}
-          onClick={onReset}
-          aria-label="Reset animation"
-          className="h-9 w-9 flex items-center justify-center rounded-xl border border-white/10 hover:bg-zinc-900 text-zinc-400 hover:text-white transition"
-        >
-          <RotateCcw className="h-4 w-4" />
-        </motion.button>
-      </div>
-
-      <div className="flex items-center gap-3 border-t border-white/5 pt-3">
-        <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold w-12">
-          Speed
-        </span>
-        <Slider
-          value={speed}
-          min={0.25}
-          max={4}
-          step={0.25}
-          onValueChange={onSpeedChange}
-          className="flex-1"
-        />
-        <span className="w-12 text-right text-xs font-mono font-bold text-indigo-400 glow-text">
-          {speed.toFixed(2)}x
-        </span>
+      <div className="flex items-center gap-2 pl-2 border-l border-white/5">
+        <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider hidden sm:block">Speed</span>
+        <div className="w-20">
+          <Slider value={speed} min={0.25} max={4} step={0.25} onValueChange={onSpeedChange} />
+        </div>
+        <span className="text-[10px] font-mono text-indigo-400 w-8 text-right">{speed.toFixed(2)}x</span>
       </div>
     </div>
   );
