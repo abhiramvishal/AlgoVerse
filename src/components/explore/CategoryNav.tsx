@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, X } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { taxonomy } from "@/data/taxonomy";
@@ -62,9 +62,11 @@ export function CategoryNav({ activeSlug }: CategoryNavProps) {
   );
   const [selectedTop, setSelectedTop] = useState(defaultTop);
   const [search, setSearch] = useState("");
+  /* Row 2 is collapsed by default; expands when user clicks a category pill */
+  const [algoRowOpen, setAlgoRowOpen] = useState(false);
 
-  const topNode  = useMemo(() => taxonomy.find((t) => t.id === selectedTop), [selectedTop]);
-  const allLeaves = useMemo(() => (topNode ? collectLeaves(topNode) : []), [topNode]);
+  const topNode   = useMemo(() => taxonomy.find((t) => t.id === selectedTop), [selectedTop]);
+  const allLeaves  = useMemo(() => (topNode ? collectLeaves(topNode) : []), [topNode]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -73,11 +75,40 @@ export function CategoryNav({ activeSlug }: CategoryNavProps) {
 
   const activeCatColor = CAT_COLOR[selectedTop] ?? "cat-indigo";
 
-  return (
-    <div className="border-b border-white/5 backdrop-blur-md select-none" style={{ background: "var(--nav-bg)" }}>
+  /* The label of the currently selected algo (for the compact chip) */
+  const activeAlgoLabel = useMemo(() => {
+    if (!activeSlug) return null;
+    for (const top of taxonomy) {
+      const leaf = collectLeaves(top).find((l) => l.id === activeSlug);
+      if (leaf) return leaf.label;
+    }
+    return null;
+  }, [activeSlug]);
 
-      {/* ── Row 1: top-level category pills ── */}
-      <div className="flex items-center gap-0.5 px-4 pt-2.5 pb-2 overflow-x-auto scrollbar-hide">
+  function handleCategoryClick(catId: string) {
+    if (selectedTop === catId) {
+      // Same category → toggle row 2
+      setAlgoRowOpen((prev) => !prev);
+    } else {
+      // Different category → switch and open row 2
+      setSelectedTop(catId);
+      setSearch("");
+      setAlgoRowOpen(true);
+    }
+  }
+
+  function handleAlgoClick() {
+    setAlgoRowOpen(false);
+    setSearch("");
+  }
+
+  return (
+    <div
+      className="border-b border-white/5 backdrop-blur-md select-none"
+      style={{ background: "var(--nav-bg)" }}
+    >
+      {/* ── Row 1: category pills + active algo chip + expand chevron ── */}
+      <div className="flex items-center gap-0.5 px-4 pt-2 pb-2 overflow-x-auto scrollbar-hide">
         {taxonomy.map((cat) => {
           const isActive = selectedTop === cat.id;
           const colorCls = CAT_COLOR[cat.id] ?? "cat-indigo";
@@ -86,8 +117,8 @@ export function CategoryNav({ activeSlug }: CategoryNavProps) {
               key={cat.id}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => { setSelectedTop(cat.id); setSearch(""); }}
-              className={`relative shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${colorCls} ${
+              onClick={() => handleCategoryClick(cat.id)}
+              className={`relative shrink-0 rounded-full px-3.5 py-1 text-xs font-semibold transition-all ${colorCls} ${
                 isActive ? "cat-pill-active" : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
@@ -95,80 +126,130 @@ export function CategoryNav({ activeSlug }: CategoryNavProps) {
             </motion.button>
           );
         })}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Active algo chip (shown when row 2 is collapsed) */}
+        <AnimatePresence>
+          {!algoRowOpen && activeAlgoLabel && (
+            <motion.span
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              transition={SPRING}
+              className={`shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border mr-2 ${activeCatColor} cat-pill-active`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+              {activeAlgoLabel}
+            </motion.span>
+          )}
+        </AnimatePresence>
+
+        {/* Expand / collapse chevron */}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setAlgoRowOpen((p) => !p)}
+          className="shrink-0 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs text-zinc-500 hover:text-zinc-300 border border-white/5 hover:bg-white/5 transition"
+        >
+          <motion.span
+            animate={{ rotate: algoRowOpen ? 180 : 0 }}
+            transition={SPRING}
+            style={{ display: "flex" }}
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </motion.span>
+          <span className="hidden sm:inline">{algoRowOpen ? "Collapse" : "Pick algo"}</span>
+        </motion.button>
       </div>
 
-      {/* ── Row 2: algorithm pills + search ── */}
-      <AnimatePresence initial={false} mode="wait">
-        <motion.div
-          key={selectedTop}
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0, transition: SPRING }}
-          exit={{ opacity: 0, y: 4, transition: { duration: 0.1 } }}
-          className="flex items-center gap-1.5 px-4 pb-2.5 overflow-x-auto scrollbar-hide"
-        >
-          {/* Search */}
-          <div className={`relative shrink-0 flex items-center ${activeCatColor}`}>
-            <Search className="absolute left-2.5 h-3 w-3 pointer-events-none" style={{ color: "var(--cat)" }} />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Filter…"
-              className="w-32 pl-7 pr-6 py-1 rounded-full bg-zinc-900/50 border border-white/8 text-xs placeholder-zinc-600 focus:outline-none transition"
-              style={{ borderColor: search ? "var(--cat)" : undefined, color: "var(--foreground)" }}
-            />
-            {search && (
-              <button onClick={() => setSearch("")} className="absolute right-2">
-                <X className="h-3 w-3 text-zinc-500 hover:text-zinc-300" />
-              </button>
-            )}
-          </div>
-
-          {/* Divider */}
-          <div className="h-4 w-px bg-white/10 shrink-0" />
-
-          {/* Algorithm pills */}
-          {filtered.map((leaf) => {
-            const mod    = moduleMap.get(leaf.id);
-            const isActive = activeSlug === leaf.id;
-            const href   = mod
-              ? `/explore/${mod.category[mod.category.length - 1]}/${mod.slug}`
-              : null;
-            const diff   = mod?.difficulty;
-
-            const pillContent = (
+      {/* ── Row 2: algorithm pills + search (collapsible) ── */}
+      <AnimatePresence initial={false}>
+        {algoRowOpen && (
+          <motion.div
+            key="algo-row"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1, transition: SPRING }}
+            exit={{ height: 0, opacity: 0, transition: { duration: 0.18 } }}
+            style={{ overflow: "hidden" }}
+          >
+            <AnimatePresence mode="wait">
               <motion.div
-                key={leaf.id}
-                whileHover={mod ? { scale: 1.05 } : {}}
-                whileTap={mod ? { scale: 0.95 } : {}}
-                className={`relative shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all ${activeCatColor} ${
-                  isActive
-                    ? "cat-pill-active shadow-md"
-                    : mod
-                      ? "text-zinc-400 hover:text-zinc-200 bg-zinc-900/30 border border-white/5 hover:border-white/10"
-                      : "text-zinc-600 bg-transparent border border-white/3 cursor-not-allowed opacity-40"
-                }`}
+                key={selectedTop}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0, transition: SPRING }}
+                exit={{ opacity: 0, y: 4, transition: { duration: 0.1 } }}
+                className="flex items-center gap-1.5 px-4 pb-2.5 overflow-x-auto scrollbar-hide"
               >
-                {diff && (
-                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${DIFF_DOT[diff] ?? "bg-zinc-500"}`} />
-                )}
-                {leaf.label}
-                {!mod && (
-                  <span className="text-[9px] text-zinc-600 font-normal">soon</span>
+                {/* Search */}
+                <div className={`relative shrink-0 flex items-center ${activeCatColor}`}>
+                  <Search className="absolute left-2.5 h-3 w-3 pointer-events-none" style={{ color: "var(--cat)" }} />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Filter…"
+                    className="w-32 pl-7 pr-6 py-1 rounded-full bg-zinc-900/50 border border-white/8 text-xs placeholder-zinc-600 focus:outline-none transition"
+                    style={{ borderColor: search ? "var(--cat)" : undefined, color: "var(--foreground)" }}
+                  />
+                  {search && (
+                    <button onClick={() => setSearch("")} className="absolute right-2">
+                      <X className="h-3 w-3 text-zinc-500 hover:text-zinc-300" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Divider */}
+                <div className="h-4 w-px bg-white/10 shrink-0" />
+
+                {/* Algorithm pills */}
+                {filtered.map((leaf) => {
+                  const mod    = moduleMap.get(leaf.id);
+                  const isActive = activeSlug === leaf.id;
+                  const href   = mod
+                    ? `/explore/${mod.category[mod.category.length - 1]}/${mod.slug}`
+                    : null;
+                  const diff   = mod?.difficulty;
+
+                  const pillContent = (
+                    <motion.div
+                      key={leaf.id}
+                      whileHover={mod ? { scale: 1.05 } : {}}
+                      whileTap={mod ? { scale: 0.95 } : {}}
+                      className={`relative shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all ${activeCatColor} ${
+                        isActive
+                          ? "cat-pill-active shadow-md"
+                          : mod
+                            ? "text-zinc-400 hover:text-zinc-200 bg-zinc-900/30 border border-white/5 hover:border-white/10"
+                            : "text-zinc-600 bg-transparent border border-white/3 cursor-not-allowed opacity-40"
+                      }`}
+                    >
+                      {diff && (
+                        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${DIFF_DOT[diff] ?? "bg-zinc-500"}`} />
+                      )}
+                      {leaf.label}
+                      {!mod && (
+                        <span className="text-[9px] text-zinc-600 font-normal">soon</span>
+                      )}
+                    </motion.div>
+                  );
+
+                  return href ? (
+                    <Link key={leaf.id} href={href} className="shrink-0" onClick={handleAlgoClick}>
+                      {pillContent}
+                    </Link>
+                  ) : (
+                    <span key={leaf.id} className="shrink-0">{pillContent}</span>
+                  );
+                })}
+
+                {filtered.length === 0 && (
+                  <span className="text-xs text-zinc-600 py-1 shrink-0">No matches for &ldquo;{search}&rdquo;</span>
                 )}
               </motion.div>
-            );
-
-            return href ? (
-              <Link key={leaf.id} href={href} className="shrink-0">{pillContent}</Link>
-            ) : (
-              <span key={leaf.id} className="shrink-0">{pillContent}</span>
-            );
-          })}
-
-          {filtered.length === 0 && (
-            <span className="text-xs text-zinc-600 py-1 shrink-0">No matches for "{search}"</span>
-          )}
-        </motion.div>
+            </AnimatePresence>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );

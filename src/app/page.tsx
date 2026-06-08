@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  BookOpen, Brain, Cpu, Database, Layers,
+  BookOpen, Brain, Cpu, Database, Layers, LogIn,
   Network, Pause, Play, RotateCcw, Sparkles,
   StepForward, Terminal, Zap,
 } from "lucide-react";
+import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
 
 import { useAuth } from "@/components/auth/AuthContext";
 
@@ -139,6 +140,7 @@ const cardVariant = {
 
 export default function Home() {
   const { openAuth } = useAuth();
+  const { isSignedIn } = useUser();
 
   /* ── Sorting preview state ── */
   const [steps] = useState(generateBubbleSortSteps);
@@ -198,16 +200,36 @@ export default function Home() {
           </motion.div>
           <span className="text-xl font-bold tracking-tight text-white glow-text">AlgoVerse</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Link
             href="/explore"
-            className="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-zinc-300 hover:text-white transition"
+            className="hidden sm:inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition"
           >
-            All Courses
+            Browse Courses
           </Link>
+
+          {/* Auth button */}
+          {isSignedIn ? (
+            <UserButton
+              appearance={{
+                elements: { avatarBox: "h-8 w-8 rounded-lg ring-1 ring-white/10" },
+              }}
+            />
+          ) : (
+            <SignInButton mode="modal">
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                className="hidden sm:flex h-8 items-center gap-1.5 rounded-lg border border-indigo-500/30 bg-indigo-600/10 px-3 text-xs font-semibold text-indigo-300 hover:bg-indigo-600/20 hover:text-indigo-200 transition"
+              >
+                <LogIn className="h-3.5 w-3.5" /> Sign In
+              </motion.button>
+            </SignInButton>
+          )}
+
           <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
             <Link
-              href="/explore"
+              href="/explore/sorting/bubble-sort"
               className="rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_28px_rgba(99,102,241,0.65)] transition-shadow inline-block"
             >
               Launch Explorer
