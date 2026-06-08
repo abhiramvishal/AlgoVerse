@@ -23,10 +23,11 @@ function SortingRenderer({ visualState }: { visualState: VisualState }) {
   const mergedRange = (visualState.mergedRange as [number, number] | null) ?? null;
 
   const maxValue = array.length ? Math.max(...array) : 1;
-  const barScale = scaleLinear().domain([0, maxValue]).range([24, 260]);
+  // Use % heights so bars fill any container size without clipping
+  const barHeightPct = (v: number) => `${((v / maxValue) * 82 + 8)}%`;
 
   return (
-    <div className="flex h-full items-end gap-2 relative z-10">
+    <div className="flex h-full w-full items-end gap-1.5 relative z-10 px-2 pb-1">
       {!array.length && (
         <div className="m-auto text-xs text-zinc-500 font-mono">
           No visual state available for this step.
@@ -52,17 +53,17 @@ function SortingRenderer({ visualState }: { visualState: VisualState }) {
                 : "from-indigo-600 to-indigo-400 border-indigo-400/20 shadow-indigo-900/10";
 
         return (
-          <div key={`bar-${index}`} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-            <span className="text-[10px] font-semibold font-mono text-zinc-400">{value}</span>
+          <div key={`bar-${index}`} className="flex min-w-0 flex-1 flex-col items-center justify-end h-full gap-1">
+            <span className="text-[10px] font-semibold font-mono text-zinc-400 shrink-0">{value}</span>
             <motion.div
               layout
               transition={{ type: "spring", damping: 18, stiffness: 220 }}
               className={`w-full rounded-t-lg border bg-gradient-to-t shadow-lg relative overflow-hidden ${barGradientClass}`}
-              style={{ height: `${barScale(value)}px` }}
+              style={{ height: barHeightPct(value) }}
             >
               <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent)] -translate-x-full animate-[shimmer_2.5s_infinite] pointer-events-none" />
             </motion.div>
-            <span className="text-[9px] font-mono text-zinc-600">{index}</span>
+            <span className="text-[9px] font-mono text-zinc-600 shrink-0">{index}</span>
           </div>
         );
       })}
@@ -936,16 +937,16 @@ function SearchRenderer({ visualState }: { visualState: VisualState }) {
   const found = typeof visualState.found === "number" ? visualState.found : -1;
 
   const maxValue = array.length ? Math.max(...array, 1) : 1;
-  const barScale = scaleLinear().domain([0, maxValue]).range([24, 240]);
+  const barHeightPct = (v: number) => `${((v / maxValue) * 82 + 8)}%`;
 
   return (
-    <div className="flex h-full flex-col gap-2 relative z-10 w-full">
+    <div className="flex h-full w-full flex-col gap-2 relative z-10">
       {target !== undefined && (
-        <div className="text-xs font-mono text-amber-400 text-center font-semibold">
+        <div className="text-xs font-mono text-amber-400 text-center font-semibold shrink-0">
           Target: {target}
         </div>
       )}
-      <div className="flex flex-1 items-end gap-2 relative">
+      <div className="flex flex-1 items-end gap-1.5 relative px-2 pb-1">
         {array.map((value, index) => {
           const isFound = found === index;
           const isActive = active.includes(index);
@@ -962,21 +963,21 @@ function SearchRenderer({ visualState }: { visualState: VisualState }) {
                 : "from-zinc-700 to-zinc-600 border-zinc-600/20";
 
           return (
-            <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-1 relative">
+            <div key={index} className="flex min-w-0 flex-1 flex-col items-center justify-end h-full gap-1 relative">
               {searchLeft === index && (
                 <div className="absolute -left-0.5 bottom-0 top-0 w-0.5 bg-cyan-400 opacity-70" />
               )}
               {searchRight === index && (
                 <div className="absolute -right-0.5 bottom-0 top-0 w-0.5 bg-cyan-400 opacity-70" />
               )}
-              <span className="text-[10px] font-semibold font-mono text-zinc-400">{value}</span>
+              <span className="text-[10px] font-semibold font-mono text-zinc-400 shrink-0">{value}</span>
               <motion.div
                 layout
                 transition={{ type: "spring", damping: 18, stiffness: 220 }}
                 className={`w-full rounded-t-lg border bg-gradient-to-t shadow-lg ${barClass}`}
-                style={{ height: `${barScale(value)}px` }}
+                style={{ height: barHeightPct(value) }}
               />
-              <span className="text-[9px] font-mono text-zinc-600">{index}</span>
+              <span className="text-[9px] font-mono text-zinc-600 shrink-0">{index}</span>
             </div>
           );
         })}
@@ -2082,11 +2083,13 @@ export function VisualizationCanvas({ visualState }: VisualizationCanvasProps) {
   }
 
   return (
-    <div className="h-full rounded-2xl border border-white/5 bg-zinc-950/60 p-4 flex flex-col justify-end relative overflow-hidden shadow-inner">
-      {/* Dynamic ambient background mesh inside canvas */}
+    <div className="h-full w-full rounded-2xl border border-white/5 bg-zinc-950/60 flex flex-col relative overflow-hidden shadow-inner">
+      {/* Ambient glow */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.03),transparent_60%)] pointer-events-none" />
-      <div className="h-full flex items-center justify-center relative z-10">
-        {renderer}
+      <div className="flex-1 min-h-0 flex items-stretch justify-stretch relative z-10 p-3">
+        <div className="flex-1 min-w-0 min-h-0">
+          {renderer}
+        </div>
       </div>
     </div>
   );
