@@ -77,7 +77,6 @@ function buildTrieNodes(
     }
     nodes[cur].isEnd = true;
     steps.push({ word, path });
-    void key; // suppress unused warning
   }
 
   return { nodes, steps };

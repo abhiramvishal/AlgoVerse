@@ -21,15 +21,14 @@ interface ExploreClientProps {
   initialSlug?: string;
 }
 
-function parseInputFromQuery(raw: string | null): number[] | null {
+function parseInputFromQuery(raw: string | null): unknown | null {
   if (!raw) return null;
-  const parsed = raw
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean)
-    .map(Number);
-  if (!parsed.length || parsed.some(Number.isNaN)) return null;
-  return parsed;
+  // Try JSON first (handles objects, arrays, numbers, strings)
+  try { return JSON.parse(raw); } catch { /* fall through */ }
+  // Legacy: comma-separated numbers
+  const parsed = raw.split(",").map((t) => Number(t.trim()));
+  if (parsed.length && !parsed.some(Number.isNaN)) return parsed;
+  return null;
 }
 
 type RightTab = "code" | "variables";
@@ -74,7 +73,14 @@ export function ExploreClient({ initialSlug = "bubble-sort" }: ExploreClientProp
     const cat = vm.category[vm.category.length - 1] ?? "sorting";
     const p = new URLSearchParams();
     p.set("step", String(currentStepIndex));
-    if (Array.isArray(input)) p.set("input", input.join(","));
+    if (input !== null && input !== undefined) {
+      // Compact: plain number arrays stay comma-separated for readability
+      if (Array.isArray(input) && (input as unknown[]).every((v) => typeof v === "number")) {
+        p.set("input", (input as number[]).join(","));
+      } else {
+        p.set("input", JSON.stringify(input));
+      }
+    }
     router.replace(`/explore/${cat}/${vm.slug}?${p.toString()}`, { scroll: false });
   }, [currentStepIndex, input, vm, router]);
 
@@ -131,8 +137,9 @@ export function ExploreClient({ initialSlug = "bubble-sort" }: ExploreClientProp
             <div className="flex items-center gap-3 px-5 py-3 border-b border-white/5 shrink-0">
               <div className="flex-1 min-w-0">
                 <InputPanel
+                  defaultInput={vm.defaultInput}
                   input={input}
-                  onApplyInput={(next) => {
+                  onApplyInput={(next: unknown) => {
                     setInput(next);
                     setCurrentStepIndex(0);
                     setIsPlaying(false);
