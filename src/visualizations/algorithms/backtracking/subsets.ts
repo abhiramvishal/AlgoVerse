@@ -15,7 +15,7 @@ const pythonCode = `def subsets(nums):
 
 export const subsetsBtModule: VisualizationModule<SubsetsInput> = {
   id: "backtracking-subsets",
-  slug: "subsets",
+  slug: "subsets-bt",
   title: "Subsets",
   category: ["algorithms", "backtracking"],
   difficulty: "intermediate",

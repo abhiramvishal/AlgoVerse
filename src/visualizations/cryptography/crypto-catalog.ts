@@ -388,7 +388,7 @@ def elgamal_decrypt(p, x, c1, c2):
 
 // ─── SHA-256 ─────────────────────────────────────────────────────────────────
 export const sha256Module: VisualizationModule<string> = {
-  id: "sha256", slug: "sha256", title: "SHA-256",
+  id: "sha-256", slug: "sha-256", title: "SHA-256",
   category: ["cryptography"], difficulty: "intermediate",
   timeComplexity: "O(n)", spaceComplexity: "O(1)",
   description: "Cryptographic hash: 64 rounds of compression producing a 256-bit digest.",
@@ -439,7 +439,7 @@ def sha256_compress(chunk, h0, h1, h2, h3, h4, h5, h6, h7):
 
 // ─── Merkle Tree (Crypto) ────────────────────────────────────────────────────
 export const merkleCryptoModule: VisualizationModule<string[]> = {
-  id: "merkle-crypto", slug: "merkle-crypto", title: "Merkle Tree",
+  id: "merkle-tree-crypto", slug: "merkle-tree-crypto", title: "Merkle Tree",
   category: ["cryptography"], difficulty: "intermediate",
   timeComplexity: "O(n log n)", spaceComplexity: "O(n)",
   description: "Binary hash tree enabling efficient and secure verification of large data.",

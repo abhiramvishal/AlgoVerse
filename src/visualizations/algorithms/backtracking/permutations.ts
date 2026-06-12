@@ -13,7 +13,7 @@ const pythonCode = `def permutations(arr, start=0):
 
 export const permutationsBtModule: VisualizationModule<PermutationsInput> = {
   id: "backtracking-permutations",
-  slug: "permutations",
+  slug: "permutations-bt",
   title: "Permutations",
   category: ["algorithms", "backtracking"],
   difficulty: "intermediate",

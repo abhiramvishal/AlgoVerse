@@ -13,7 +13,13 @@ function getCachedSteps(mod: VisualizationModule, input: unknown): AnimationStep
   const key = `${mod.slug}:${JSON.stringify(input)}`;
   if (stepsCache.has(key)) return stepsCache.get(key)!;
 
-  const result = mod.generateSteps(input);
+  let result: AnimationStep[];
+  try {
+    result = mod.generateSteps(input);
+  } catch {
+    // Bad input (e.g. malformed ?input= in a shared URL) — fall back to defaults
+    result = mod.generateSteps(mod.defaultInput);
+  }
   stepsCache.set(key, result);
 
   // Evict oldest entry if over cap
@@ -35,7 +41,10 @@ interface VisualizationState {
 const useVisualizationStore = create<VisualizationState>((set) => ({
   slug:     "bubble-sort",
   input:    null,
-  setSlug:  (slug)  => set({ slug }),
+  // Reset input atomically on slug change — otherwise the new module's
+  // generateSteps runs once with the PREVIOUS algorithm's input shape,
+  // which crashes (or infinite-loops) modules expecting a different type.
+  setSlug:  (slug)  => set((s) => (s.slug === slug ? s : { slug, input: null })),
   setInput: (input) => set({ input }),
 }));
 

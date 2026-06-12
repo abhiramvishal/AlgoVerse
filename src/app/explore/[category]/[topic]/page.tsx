@@ -1,17 +1,8 @@
 import { Suspense } from "react";
 import { ExploreClient } from "@/components/explore/ExploreClient";
-import { visualizationModules } from "@/lib/visualization-registry";
 
 interface TopicPageProps {
   params: Promise<{ category: string; topic: string }>;
-}
-
-/* Pre-render every algorithm page at build time → static HTML, zero cold-start */
-export function generateStaticParams() {
-  return visualizationModules.map((m) => ({
-    category: m.category[m.category.length - 1] ?? "algorithms",
-    topic: m.slug,
-  }));
 }
 
 export default async function TopicPage({ params }: TopicPageProps) {
@@ -19,7 +10,7 @@ export default async function TopicPage({ params }: TopicPageProps) {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center text-zinc-400">
+        <div className="flex min-h-screen items-center justify-center text-zinc-400 bg-[#06050b]">
           Loading…
         </div>
       }

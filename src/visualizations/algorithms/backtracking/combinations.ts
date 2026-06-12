@@ -17,7 +17,7 @@ const pythonCode = `def combinations(n, k):
 
 export const combinationsBtModule: VisualizationModule<CombinationsInput> = {
   id: "backtracking-combinations",
-  slug: "combinations",
+  slug: "combinations-bt",
   title: "Combinations",
   category: ["algorithms", "backtracking"],
   difficulty: "intermediate",
