@@ -26,7 +26,7 @@ const pythonCode = `def word_search(board, word):
 
 export const wordSearchBtModule: VisualizationModule<WordSearchInput> = {
   id: "backtracking-word-search",
-  slug: "word-search",
+  slug: "word-search-bt",
   title: "Word Search",
   category: ["algorithms", "backtracking"],
   difficulty: "intermediate",
