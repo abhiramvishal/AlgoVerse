@@ -20,55 +20,81 @@ export const cfgModule: VisualizationModule<{ grammar: string; input: string }> 
   defaultInput: { grammar: "S→aSb|ε", input: "aabb" },
   generateSteps(input) {
     const steps: AnimationStep[] = [];
+    const str = String(input?.input ?? "").trim();
 
-    // Parse tree nodes built incrementally
-    // Tree: root S (id:0) -> a(1), S(2), b(3)
-    //       S(2) -> a(4), S(5), b(6)
-    //       S(5) -> ε(7)
+    // This module models the canonical balanced grammar S → aSb | ε,
+    // whose language is { aⁿbⁿ | n ≥ 0 }. Derive the supplied input string.
+    const m = /^(a*)(b*)$/.exec(str);
+    const na = m ? m[1].length : -1;
+    const nb = m ? m[2].length : -1;
+    const inLanguage = !!m && na === nb;
 
-    const allNodes = [
-      { id: "0", label: "S",  x: 260, y: 40  },
-      { id: "1", label: "a",  x: 120, y: 130 },
-      { id: "2", label: "S",  x: 260, y: 130 },
-      { id: "3", label: "b",  x: 400, y: 130 },
-      { id: "4", label: "a",  x: 200, y: 220 },
-      { id: "5", label: "S",  x: 260, y: 220 },
-      { id: "6", label: "b",  x: 320, y: 220 },
-      { id: "7", label: "ε",  x: 260, y: 310 },
-    ];
-
-    const allEdges = [
-      { from: "0", to: "1", weight: 0, directed: true },
-      { from: "0", to: "2", weight: 0, directed: true },
-      { from: "0", to: "3", weight: 0, directed: true },
-      { from: "2", to: "4", weight: 0, directed: true },
-      { from: "2", to: "5", weight: 0, directed: true },
-      { from: "2", to: "6", weight: 0, directed: true },
-      { from: "5", to: "7", weight: 0, directed: true },
-    ];
-
-    const snapshots = [
-      { nodes: 1, edges: 0, current: "0", desc: `Start: S. Grammar: S → aSb | ε. Deriving "aabb".`, sentinel: "S" },
-      { nodes: 4, edges: 3, current: "2", desc: `Apply S → aSb: sentential form = a S b.`, sentinel: "aSb" },
-      { nodes: 7, edges: 6, current: "5", desc: `Apply S → aSb again: sentential form = a a S b b.`, sentinel: "aaSbb" },
-      { nodes: 8, edges: 7, current: "7", desc: `Apply S → ε: sentential form = a a ε b b = "aabb". Derivation complete!`, sentinel: "aabb" },
-    ];
-
-    for (const snap of snapshots) {
+    // Rejection case — show why the string isn't derivable.
+    if (!inLanguage) {
       steps.push({
+        stepNumber: 1,
+        description: `"${str}" is NOT in L(S→aSb|ε) = { aⁿbⁿ }. ${
+          !m ? "Must be some a's followed by some b's." : `Counts differ: ${na} a's vs ${nb} b's.`
+        }`,
+        highlightLines: [1],
+        visualState: { type: "tree", nodes: [{ id: "0", label: "S", x: 260, y: 40 }], highlighted: ["0"], comparing: [], inserted: [], found: [] },
+        variables: { input: str, inLanguage: false, aCount: na, bCount: nb },
+      });
+      return steps;
+    }
+
+    const n = na; // number of S→aSb expansions
+    // Build the parse tree dynamically. Each level d (0..n-1) expands an S
+    // into a, S, b; the final center S becomes ε.
+    const nodes: { id: string; label: string; x: number; y: number }[] = [];
+    const cx = 260;
+    const topY = 40;
+    const dy = Math.max(40, Math.min(70, 300 / (n + 1)));
+    let nodeOrder: string[] = []; // ids in derivation reveal order
+
+    // node id scheme: level prefix
+    for (let d = 0; d <= n; d++) {
+      const y = topY + d * dy;
+      const spread = Math.max(26, (n - d) * 46);
+      // center S (or ε at the bottom)
+      nodes.push({ id: `S${d}`, label: d === n ? "ε" : "S", x: cx, y });
+      if (d < n) {
+        nodes.push({ id: `a${d}`, label: "a", x: cx - spread, y: y + dy });
+        nodes.push({ id: `b${d}`, label: "b", x: cx + spread, y: y + dy });
+      }
+    }
+
+    // Derivation snapshots: reveal level by level
+    const sentential = (d: number) =>
+      d >= n ? "a".repeat(n) + "b".repeat(n)
+             : "a".repeat(d) + "S" + "b".repeat(d);
+
+    nodeOrder = ["S0"];
+    steps.push(snap(0));
+    for (let d = 0; d < n; d++) {
+      nodeOrder.push(`a${d}`, `S${d + 1}`, `b${d}`);
+      steps.push(snap(d + 1));
+    }
+
+    function snap(d: number): AnimationStep {
+      const visible = new Set(nodeOrder);
+      const current = d >= n ? `S${n}` : `S${d}`;
+      const desc =
+        d === 0 ? `Start symbol S. Grammar S → aSb | ε. Deriving "${str}".`
+        : d < n ? `Apply S → aSb (${d}/${n}): sentential form = ${sentential(d)}.`
+        : `Apply S → ε: final string = "${str}". Accepted ✓`;
+      return {
         stepNumber: steps.length + 1,
-        description: snap.desc,
+        description: desc,
         highlightLines: [1],
         visualState: {
           type: "tree",
-          nodes: allNodes.slice(0, snap.nodes),
-          highlighted: [snap.current],
-          comparing: [],
-          inserted: [],
-          found: [],
+          nodes: nodes.filter((nd) => visible.has(nd.id)),
+          highlighted: [current],
+          comparing: [], inserted: [], found: [],
         },
-        variables: { sentential: snap.sentinel, derivationStep: steps.length + 1 },
-      });
+        variables: { sentential: sentential(d), n, input: str },
+      };
     }
 
     return steps;

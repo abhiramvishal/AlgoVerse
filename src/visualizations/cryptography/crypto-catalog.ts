@@ -84,13 +84,55 @@ def chacha20_block(key, nonce, counter):
   defaultInput: {key: 0xAB, nonce: 0x01},
   generateSteps({key, nonce}) {
     const steps: AnimationStep[] = [];
-    const state = Array.from({length:16},(_,i)=>({val:`s${i}`,state:"default" as string}));
-    steps.push(arr(1,"Initial state: constants + key + counter + nonce",[8,9],state,"State (4×4)",{key:`0x${key.toString(16)}`,nonce:`0x${nonce.toString(16)}`}));
-    steps.push(arr(2,"Column rounds: quarter_round on columns",[11,12,13,14,15],[...state.slice(0,4).map(s=>({...s,state:"active" as string})),...state.slice(4)],"After col rounds",{round:1}));
-    steps.push(arr(3,"Diagonal rounds: quarter_round on diagonals",[12],state.map((s,i)=>({val:s.val,state:i%5===0?"active":"default" as string})),"After diag rounds",{round:2}));
-    steps.push(arr(4,"20 total rounds complete",[10],state.map(s=>({...s,state:"computed" as string})),"After 20 rounds",{rounds:20}));
-    const ks = Array.from({length:8},(_,i)=>({val:`ks${i}`,state:"highlighted" as string}));
-    steps.push(arr(5,"XOR keystream with plaintext → ciphertext",[16],ks,"Keystream",{op:"XOR",secure:true}));
+    const hex = (n: number) => `0x${(n >>> 0).toString(16).toUpperCase().padStart(2, "0").slice(-2)}`;
+    const rotl = (v: number, c: number) => ((v << c) | (v >>> (8 - c))) & 0xff;
+
+    // Build a 16-word state from constants + key + counter + nonce, derived
+    // from the actual key/nonce input (8-bit simplified for visualization).
+    const consts = [0x61, 0x6e, 0x64, 0x32]; // "and2" — ChaCha "expand 32-byte k" stand-in
+    const k = (key >>> 0) & 0xff;
+    const no = (nonce >>> 0) & 0xff;
+    let state = [
+      ...consts,
+      k, (k + 1) & 0xff, (k ^ 0x55) & 0xff, (k + 0x10) & 0xff,
+      (k ^ 0x0f) & 0xff, (k + 0x20) & 0xff, (k ^ 0xaa) & 0xff, (k + 0x30) & 0xff,
+      0x00, no, (no ^ 0x33) & 0xff, (no + 0x40) & 0xff,
+    ];
+    const cells = (s: number[], states: string[]) => s.map((v, i) => ({ val: hex(v), state: states[i] || "default" }));
+
+    steps.push(arr(1, `Initialize 4×4 state from key=${hex(k)}, nonce=${hex(no)}.`, [8,9],
+      cells(state, state.map((_,i)=> i<4 ? "computed" : i>=12 ? "highlighted" : "active")),
+      "State (consts | key | counter | nonce)", { key: hex(k), nonce: hex(no) }));
+
+    // One ChaCha quarter-round on a column (indices 0,4,8,12), derived from state
+    const qr = (s: number[], a:number,b:number,c:number,d:number) => {
+      s[a]=(s[a]+s[b])&0xff; s[d]=rotl(s[d]^s[a],4);
+      s[c]=(s[c]+s[d])&0xff; s[b]=rotl(s[b]^s[c],3);
+      s[a]=(s[a]+s[b])&0xff; s[d]=rotl(s[d]^s[a],2);
+      s[c]=(s[c]+s[d])&0xff; s[b]=rotl(s[b]^s[c],1);
+      return s;
+    };
+
+    state = qr([...state], 0,4,8,12);
+    steps.push(arr(2, "Column round: quarter_round(0,4,8,12) mixes the first column.", [11,12,13,14,15],
+      cells(state, state.map((_,i)=> [0,4,8,12].includes(i) ? "active" : "default")),
+      "After column round", { round: 1 }));
+
+    state = qr([...state], 0,5,10,15);
+    steps.push(arr(3, "Diagonal round: quarter_round(0,5,10,15) mixes a diagonal.", [12],
+      cells(state, state.map((_,i)=> [0,5,10,15].includes(i) ? "active" : "default")),
+      "After diagonal round", { round: 2 }));
+
+    // Many rounds (apply a few more mixes) then mark complete
+    for (let r = 0; r < 4; r++) { state = qr(state, 1,5,9,13); state = qr(state, 2,6,10,14); }
+    steps.push(arr(4, "After 20 rounds (10 double-rounds): keystream block ready.", [10],
+      cells(state, state.map(()=> "computed")), "Keystream block", { rounds: 20 }));
+
+    // Keystream = first 8 bytes; show they depend on key/nonce
+    const ks = state.slice(0, 8);
+    steps.push(arr(5, "XOR keystream bytes with plaintext → ciphertext.", [16],
+      cells(ks, ks.map(()=> "highlighted")), "Keystream (first 8 bytes)",
+      { keystream: ks.map(hex).join(" "), op: "XOR" }));
     return steps;
   }
 };

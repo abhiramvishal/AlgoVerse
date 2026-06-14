@@ -66,7 +66,9 @@ export const hashTableQuadraticProbingModule: VisualizationModule<{ keys: number
 
       let probe = 0;
       let slot = h;
-      while (table[slot] !== null) {
+      // Guard: quadratic probing may never find a free slot (only guaranteed
+      // for prime size and load < 0.5). Cap probes at 2·tableSize.
+      while (table[slot] !== null && probe < 2 * tableSize) {
         probe++;
         const nextSlot = (h + probe * probe) % tableSize;
         steps.push({
@@ -85,6 +87,21 @@ export const hashTableQuadraticProbingModule: VisualizationModule<{ keys: number
           variables: { key, probe, slot: nextSlot, formula: `(${h}+${probe}²)%${tableSize}` },
         });
         slot = nextSlot;
+      }
+
+      if (table[slot] !== null) {
+        steps.push({
+          stepNumber: steps.length + 1,
+          description: `Could not place ${key} — no free slot found via quadratic probing.`,
+          highlightLines: [],
+          visualState: {
+            type: "array1d",
+            cells: table.map((v) => ({ val: v === null ? "_" : v, state: v !== null ? "highlighted" : "default" })),
+            label: `Hash Table (size=${tableSize})`,
+          },
+          variables: { key, status: "probe limit reached" },
+        });
+        break;
       }
 
       table[slot] = key;

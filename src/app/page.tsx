@@ -491,8 +491,33 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 bg-[#08070f]/60 py-8 text-center text-xs text-zinc-500 relative z-10">
+      <footer className="border-t border-white/5 bg-[#08070f]/60 py-8 text-center text-xs text-zinc-500 relative z-10 space-y-2">
         <p>© 2026 AlgoVerse. Visualizing everything in Computer Science.</p>
+        <p className="text-zinc-600">
+          Built by{" "}
+          <a
+            href="https://www.linkedin.com/in/gopi-abhiram-vishal-chongala-9a9098177/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-zinc-400 hover:text-indigo-400 transition-colors"
+          >
+            Abhiram Chongala
+          </a>
+          <span className="text-zinc-700"> · AI Developer</span>
+          {"  •  "}
+          <a
+            href="https://www.linkedin.com/in/mydafzal/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-zinc-400 hover:text-indigo-400 transition-colors"
+          >
+            Maida Afzal
+          </a>
+          <span className="text-zinc-700"> · AI Engineer</span>
+        </p>
+        <p className="text-[10px] text-zinc-700">
+          Issues? <a href="mailto:shauneden619@gmail.com" className="hover:text-zinc-500 transition-colors">shauneden619@gmail.com</a>
+        </p>
       </footer>
     </div>
   );

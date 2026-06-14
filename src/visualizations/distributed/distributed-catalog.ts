@@ -754,14 +754,38 @@ class Projector:
     { stepNumber: 9, highlightLines: [9] },
     { stepNumber: 13, highlightLines: [13] },
   ],
-  defaultInput: "Order Service",
-  generateSteps(service) {
+  defaultInput: "CreateOrder, UpdateOrder, GetOrder, GetOrder",
+  generateSteps(commands) {
     const steps: AnimationStep[] = [];
-    steps.push(arr(1,`${service}: separate write and read paths`,[3,9],[{val:"Write Model",state:"active"},{val:"Read Model",state:"computed"}],"CQRS",{service}));
-    steps.push(arr(2,"Command: CreateOrder → CommandHandler",[3,4],[{val:"CreateOrder",state:"active"},{val:"→ Handler",state:"computed"}],"Command side",{cmd:"CreateOrder"}));
-    steps.push(arr(3,"Event emitted: OrderCreated → Event Bus",[5,6],[{val:"OrderCreated",state:"highlighted"},{val:"→ EventBus",state:"computed"}],"Event emitted",{}));
-    steps.push(arr(4,"Projector updates read DB (denormalized)",[13,14,15],[{val:"orders_view",state:"computed"},{val:"updated",state:"highlighted"}],"Read model",{denormalized:true}));
-    steps.push(arr(5,"Query: GetOrder → QueryHandler (fast read)",[9,10],[{val:"GetOrder",state:"active"},{val:"orders_view",state:"highlighted"}],"Query side",{latency:"<1ms",optimized:true}));
+    // Parse the custom command sequence. Read commands (Get/Query/Find/List)
+    // go to the read model; everything else is a write command.
+    const cmds = String(commands).split(/[,\n]/).map(c => c.trim()).filter(Boolean);
+    const isRead = (c: string) => /^(get|query|find|list|read)/i.test(c);
+
+    let writes = 0, reads = 0, events = 0;
+    steps.push(arr(1, `CQRS: ${cmds.length} command(s) routed across separate write/read models.`,
+      [3,9], [{val:"Write Model",state:"active"},{val:"Event Bus",state:"default"},{val:"Read Model",state:"computed"}],
+      "CQRS pipeline", { commands: cmds }));
+
+    cmds.forEach((cmd, i) => {
+      if (isRead(cmd)) {
+        reads++;
+        steps.push(arr(2 + i, `Query: ${cmd} → QueryHandler reads the denormalized view.`,
+          [13,14,15],
+          [{val:"Write Model",state:"default"},{val:"Event Bus",state:"default"},{val:`${cmd}`,state:"highlighted"}],
+          "Read path", { command: cmd, side: "query", reads }));
+      } else {
+        writes++; events++;
+        steps.push(arr(2 + i, `Command: ${cmd} → CommandHandler saves + emits event ${cmd.replace(/^(Create|Update|Delete)/,"")}ed.`,
+          [3,4,5,6],
+          [{val:`${cmd}`,state:"active"},{val:"event emitted",state:"highlighted"},{val:"Read Model",state:"default"}],
+          "Write path", { command: cmd, side: "command", writes, events }));
+      }
+    });
+
+    steps.push(arr(2 + cmds.length, `Done: ${writes} write(s) emitted ${events} event(s); ${reads} read(s) served from the view.`,
+      [9,10], [{val:`${writes} writes`,state:"active"},{val:`${events} events`,state:"highlighted"},{val:`${reads} reads`,state:"computed"}],
+      "Summary", { writes, reads, events }));
     return steps;
   }
 };

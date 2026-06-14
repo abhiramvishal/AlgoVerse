@@ -278,7 +278,7 @@ def shade(t, ray, normal, light):
 };
 
 // ─── Ray-Triangle Intersection ────────────────────────────────────────────────
-export const rayTriangleModule: VisualizationModule<string> = {
+export const rayTriangleModule: VisualizationModule<{px:number,py:number}> = {
   id: "ray-triangle", slug: "ray-triangle", title: "Ray-Triangle Intersection",
   category: ["graphics"], difficulty: "intermediate",
   timeComplexity: "O(1)", spaceComplexity: "O(1)",
@@ -313,14 +313,29 @@ def moller_trumbore(ray_origin, ray_dir, v0, v1, v2, eps=1e-7):
     { stepNumber: 16, highlightLines: [16] },
     { stepNumber: 18, highlightLines: [18] },
   ],
-  defaultInput: "Möller-Trumbore",
-  generateSteps(_) {
+  defaultInput: {px:0.25, py:0.25},
+  generateSteps({px, py}) {
     const steps: AnimationStep[] = [];
-    steps.push(arr(1,"Triangle v0=(0,0,0), v1=(1,0,0), v2=(0,1,0)",[3],[{val:"v0",state:"active"},{val:"v1",state:"active"},{val:"v2",state:"active"}],"Triangle",{}));
-    steps.push(arr(2,"Compute edge vectors e1 and e2",[4,5],[{val:"e1=(1,0,0)",state:"computed"},{val:"e2=(0,1,0)",state:"computed"}],"Edges",{}));
-    steps.push(arr(3,"h=cross(dir,e2), a=dot(e1,h)",[6,7],[{val:"h=(0,0,-1)",state:"computed"},{val:"a=1.0",state:"highlighted"}],"Determinant",{parallel:false}));
-    steps.push(arr(4,"Compute u=0.25, v=0.25 (inside triangle!)",[10,11,14,15],[{val:"u=0.25",state:"highlighted"},{val:"v=0.25",state:"highlighted"},{val:"u+v=0.5≤1",state:"computed"}],"Barycentric",{u:0.25,v:0.25}));
-    steps.push(arr(5,"t=5.0 → hit point (0.25, 0.25, 0)",[18],[{val:"t=5.0",state:"highlighted"},{val:"HIT",state:"highlighted"}],"Intersection",{t:5.0}));
+    // Triangle v0=(0,0,0), v1=(1,0,0), v2=(0,1,0); ray fired at z=0 plane,
+    // hitting (px, py). For this unit triangle the barycentric coords are u=px, v=py.
+    const u = px, v = py;
+    const uOk = u >= 0 && u <= 1;
+    const vOk = v >= 0 && (u + v) <= 1;
+    const hit = uOk && vOk && v >= 0;
+    const f2 = (x:number)=>x.toFixed(2);
+
+    steps.push(arr(1,`Triangle v0=(0,0,0), v1=(1,0,0), v2=(0,1,0). Ray hits plane at (${f2(px)}, ${f2(py)}).`,[3],
+      [{val:"v0",state:"active"},{val:"v1",state:"active"},{val:"v2",state:"active"},{val:`P=(${f2(px)},${f2(py)})`,state:"highlighted"}],"Triangle + ray",{px,py}));
+    steps.push(arr(2,"Compute edge vectors e1=v1-v0, e2=v2-v0.",[4,5],
+      [{val:"e1=(1,0,0)",state:"computed"},{val:"e2=(0,1,0)",state:"computed"}],"Edges",{}));
+    steps.push(arr(3,`h=cross(dir,e2), a=dot(e1,h)=1.0 (not parallel).`,[6,7],
+      [{val:"h=(0,0,-1)",state:"computed"},{val:"a=1.0",state:"highlighted"}],"Determinant",{parallel:false}));
+    steps.push(arr(4,`Barycentric: u=${f2(u)} (${uOk?"0≤u≤1 ✓":"out of range ✗"}).`,[10,11],
+      [{val:`u=${f2(u)}`,state:uOk?"highlighted":"active"}],"Check u",{u:+f2(u),uValid:uOk}));
+    steps.push(arr(5,`v=${f2(v)}, u+v=${f2(u+v)} (${vOk?"u+v≤1 ✓":"u+v>1 or v<0 ✗"}).`,[13,14,15],
+      [{val:`v=${f2(v)}`,state:vOk?"highlighted":"active"},{val:`u+v=${f2(u+v)}`,state:vOk?"computed":"active"}],"Check v",{v:+f2(v),vValid:vOk}));
+    steps.push(arr(6, hit ? `HIT! Point (${f2(px)}, ${f2(py)}) is inside the triangle.` : `MISS — point (${f2(px)}, ${f2(py)}) is outside the triangle.`,[18],
+      [{val:hit?"HIT":"MISS",state:"highlighted"}], hit?"Intersection":"No intersection",{result:hit?"HIT":"MISS"}));
     return steps;
   }
 };
@@ -465,7 +480,7 @@ def quat_rotate(point, axis, angle):
 };
 
 // ─── Affine Transformations ───────────────────────────────────────────────────
-export const affineTransformationsModule: VisualizationModule<string> = {
+export const affineTransformationsModule: VisualizationModule<{x:number,y:number}> = {
   id: "affine-transformations", slug: "affine-transformations", title: "Affine Transformations",
   category: ["graphics"], difficulty: "intermediate",
   timeComplexity: "O(n)", spaceComplexity: "O(1)",
@@ -501,22 +516,39 @@ def transform(points, matrices):
     { stepNumber: 13, highlightLines: [13] },
     { stepNumber: 16, highlightLines: [16] },
   ],
-  defaultInput: "TRS",
-  generateSteps(_) {
+  defaultInput: {x:2, y:1},
+  generateSteps({x, y}) {
     const steps: AnimationStep[] = [];
-    const pt=[2,1];
-    steps.push(arr(1,"Original point (2,1)",[3],[ {val:`(${pt.join(",")})`,state:"active"}],"Point",{}));
-    const s=[3,2,1];
-    steps.push(arr(2,"Scale(2,2): (2,1) → (4,2)",[6,7],[{val:"S=[2,0;0,2;0,0,1]",state:"computed"},{val:"(4,2)",state:"highlighted"}],"After Scale",{sx:2,sy:2}));
-    steps.push(arr(3,"Rotate(45°): (4,2) → (2.83,4.24)",[9,10,11],[{val:"R=...",state:"computed"},{val:"(2.83,4.24)",state:"highlighted"}],"After Rotate",{theta:"45°"}));
-    steps.push(arr(4,"Translate(1,1): → (3.83,5.24)",[3,4,5],[{val:"T=[1,0,1;0,1,1;0,0,1]",state:"computed"},{val:"(3.83,5.24)",state:"highlighted"}],"After Translate",{}));
-    steps.push(arr(5,"Composition: T·R·S applied in one matrix multiply",[16,17,18,19,20],[{val:"M=T·R·S",state:"highlighted"},{val:"1 multiply",state:"active"}],"TRS composed",{efficient:true}));
+    const f = (n:number)=>n.toFixed(2);
+    const pt = (a:number,b:number)=>`(${f(a)}, ${f(b)})`;
+
+    steps.push(arr(1,`Original point ${pt(x,y)}.`,[3],
+      [{val:pt(x,y),state:"active"}],"Point",{x,y}));
+
+    // Scale(2,2)
+    let sx = x*2, sy = y*2;
+    steps.push(arr(2,`Scale(2,2): ${pt(x,y)} → ${pt(sx,sy)}.`,[6,7],
+      [{val:"S=[2,0;0,2;0,0,1]",state:"computed"},{val:pt(sx,sy),state:"highlighted"}],"After Scale",{sx:2,sy:2,result:pt(sx,sy)}));
+
+    // Rotate(45°)
+    const th = Math.PI/4, c = Math.cos(th), s = Math.sin(th);
+    let rx = sx*c - sy*s, ry = sx*s + sy*c;
+    steps.push(arr(3,`Rotate(45°): ${pt(sx,sy)} → ${pt(rx,ry)}.`,[9,10,11],
+      [{val:"R=[cos,-sin;sin,cos]",state:"computed"},{val:pt(rx,ry),state:"highlighted"}],"After Rotate",{theta:"45°",result:pt(rx,ry)}));
+
+    // Translate(1,1)
+    let tx = rx+1, ty = ry+1;
+    steps.push(arr(4,`Translate(1,1): ${pt(rx,ry)} → ${pt(tx,ty)}.`,[3,4,5],
+      [{val:"T=[1,0,1;0,1,1;0,0,1]",state:"computed"},{val:pt(tx,ty),state:"highlighted"}],"After Translate",{result:pt(tx,ty)}));
+
+    steps.push(arr(5,`Composition M=T·R·S maps ${pt(x,y)} → ${pt(tx,ty)} in one matrix multiply.`,[16,17,18,19,20],
+      [{val:"M=T·R·S",state:"computed"},{val:`${pt(x,y)}→${pt(tx,ty)}`,state:"highlighted"}],"TRS composed",{final:pt(tx,ty)}));
     return steps;
   }
 };
 
 // ─── Homogeneous Coordinates ──────────────────────────────────────────────────
-export const homogeneousCoordsModule: VisualizationModule<string> = {
+export const homogeneousCoordsModule: VisualizationModule<{x:number,y:number}> = {
   id: "homogeneous-coords", slug: "homogeneous-coords", title: "Homogeneous Coordinates",
   category: ["graphics"], difficulty: "intermediate",
   timeComplexity: "O(1)", spaceComplexity: "O(1)",
@@ -550,14 +582,30 @@ def project(p3d, M):
     { stepNumber: 9, highlightLines: [9] },
     { stepNumber: 19, highlightLines: [19] },
   ],
-  defaultInput: "Perspective",
-  generateSteps(_) {
+  defaultInput: {x:3, y:2},
+  generateSteps({x, y}) {
     const steps: AnimationStep[] = [];
-    steps.push(arr(1,"2D point (3,2) → homogeneous (3,2,1)",[6],[{val:"(3,2)",state:"active"},{val:"→(3,2,1)",state:"computed"}],"Homogeneous 2D",{w:1}));
-    steps.push(arr(2,"Translation via matrix: no special case needed",[6],[{val:"T·(3,2,1)",state:"computed"},{val:"=(5,4,1)",state:"highlighted"}],"Translate",{tx:2,ty:2}));
-    steps.push(arr(3,"3D point (1,2,5) → (1,2,5,1)",[6],[{val:"(1,2,5)",state:"active"},{val:"→(1,2,5,1)",state:"computed"}],"Homogeneous 3D",{w:1}));
-    steps.push(arr(4,"Perspective matrix M multiplied",[9,10,11,12,13,14,15],[{val:"M·(1,2,5,1)",state:"computed"},{val:"=(0.2,0.4,-1.2,−5)",state:"computed"}],"Clip space",{}));
-    steps.push(arr(5,"Perspective divide: /w → NDC (-0.04,-0.08)",[7,20,21],[{val:"÷w=-5",state:"active"},{val:"NDC=(-0.04,-0.08)",state:"highlighted"}],"NDC",{perspective:true}));
+    const f = (n:number)=>n.toFixed(2);
+
+    steps.push(arr(1,`2D point (${f(x)}, ${f(y)}) → homogeneous (${f(x)}, ${f(y)}, 1).`,[6],
+      [{val:`(${f(x)},${f(y)})`,state:"active"},{val:`→(${f(x)},${f(y)},1)`,state:"computed"}],"Homogeneous lift (w=1)",{x,y,w:1}));
+
+    // Translate(2,2) as a matrix multiply (works because of the homogeneous w)
+    const tx = x+2, ty = y+2;
+    steps.push(arr(2,`Translate(2,2) as matrix·vector: (${f(x)},${f(y)},1) → (${f(tx)},${f(ty)},1).`,[6],
+      [{val:"T·v",state:"computed"},{val:`(${f(tx)},${f(ty)},1)`,state:"highlighted"}],"Translate via matrix",{tx:2,ty:2,result:`(${f(tx)},${f(ty)})`}));
+
+    // Lift to 3D at depth z = (x+y+1), then perspective divide
+    const z = Math.abs(x) + Math.abs(y) + 1;
+    steps.push(arr(3,`Place at depth z=${f(z)}: homogeneous (${f(tx)}, ${f(ty)}, ${f(z)}, 1).`,[6],
+      [{val:`(${f(tx)},${f(ty)},${f(z)})`,state:"active"},{val:"w=1",state:"computed"}],"Homogeneous 3D",{z}));
+
+    // Perspective divide by w' = z
+    const ndcx = tx/z, ndcy = ty/z;
+    steps.push(arr(4,`Perspective matrix sets w' = z = ${f(z)}.`,[9,10,11,12,13],
+      [{val:`w'=${f(z)}`,state:"highlighted"}],"Clip space",{wPrime:+f(z)}));
+    steps.push(arr(5,`Perspective divide ÷w': NDC = (${f(ndcx)}, ${f(ndcy)}). Farther points shrink toward center.`,[7,16,17],
+      [{val:`÷${f(z)}`,state:"active"},{val:`NDC=(${f(ndcx)},${f(ndcy)})`,state:"highlighted"}],"NDC after divide",{ndc:`(${f(ndcx)},${f(ndcy)})`}));
     return steps;
   }
 };

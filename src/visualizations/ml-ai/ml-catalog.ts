@@ -325,13 +325,57 @@ def predict(doc, class_counts, word_counts, vocab):
   defaultInput: ["good great excellent","bad terrible awful","good bad mediocre"],
   generateSteps(docs) {
     const steps: AnimationStep[] = [];
-    const words = ["good","great","bad","awful","excellent","terrible"];
-    const make = (states: string[]) => words.map((w,i)=>({val:w,state:states[i]||"default"}));
-    steps.push(arr(1,"Count words per class (pos/neg)",[3,4,5,6,7,8,9,10],make(["active","active","default","default","active","default"]),"Positive class",{count:3}));
-    steps.push(arr(2,"Negative class word counts",[3,4,5,6,7,8,9,10],make(["default","default","active","active","default","active"]),"Negative class",{count:3}));
-    steps.push(arr(3,"Compute priors P(pos)=0.5, P(neg)=0.5",[14],make(Array(6).fill("default")),"Priors",{P_pos:0.5,P_neg:0.5}));
-    steps.push(arr(4,"Compute likelihoods with Laplace smoothing",[15,16,17],make(["active","default","default","default","default","default"]),"P(good|pos)",{smoothed:true}));
-    steps.push(arr(5,"Select class with max posterior",[19],make(["active","active","default","default","active","default"]),"Prediction: Positive",{result:"positive"}));
+    // Tokenize each document from the actual input.
+    const tokens = docs.map(d => String(d).toLowerCase().split(/\s+/).filter(Boolean));
+    // Build vocabulary (unique words across all docs), capped for display.
+    const vocab = Array.from(new Set(tokens.flat())).slice(0, 12);
+
+    // Label docs alternately as the two classes so we have a real NB model.
+    const labelOf = (i: number) => (i % 2 === 0 ? "A" : "B");
+    const make = (active: Set<string>, highlight: Set<string> = new Set()) =>
+      vocab.map(w => ({
+        val: w,
+        state: highlight.has(w) ? "highlighted" : active.has(w) ? "active" : "default",
+      }));
+
+    // Step 1: vocabulary built from the input
+    steps.push(arr(1, `Build vocabulary from ${docs.length} document(s): ${vocab.length} unique word(s).`,
+      [3,4,5], make(new Set(vocab)), "Vocabulary", { vocab }));
+
+    // One step per document showing its words + class label
+    const countA: Record<string, number> = {};
+    const countB: Record<string, number> = {};
+    let nA = 0, nB = 0;
+    tokens.forEach((toks, i) => {
+      const cls = labelOf(i);
+      if (cls === "A") nA++; else nB++;
+      for (const w of toks) {
+        if (cls === "A") countA[w] = (countA[w] || 0) + 1;
+        else countB[w] = (countB[w] || 0) + 1;
+      }
+      steps.push(arr(2 + i, `Doc ${i + 1} → class ${cls}: "${docs[i]}"`,
+        [6,7,8,9,10], make(new Set(toks)), `Class ${cls} counts`,
+        { doc: docs[i], class: cls, words: toks }));
+    });
+
+    // Priors from actual class distribution
+    const total = docs.length || 1;
+    steps.push(arr(2 + tokens.length, `Priors: P(A)=${(nA/total).toFixed(2)}, P(B)=${(nB/total).toFixed(2)}.`,
+      [13,14], make(new Set()), "Priors", { "P(A)": +(nA/total).toFixed(2), "P(B)": +(nB/total).toFixed(2) }));
+
+    // Classify the last document against the trained counts (Laplace smoothing)
+    const query = tokens[tokens.length - 1] ?? [];
+    const sumA = Object.values(countA).reduce((s,v)=>s+v,0);
+    const sumB = Object.values(countB).reduce((s,v)=>s+v,0);
+    let scoreA = nA/total, scoreB = nB/total;
+    for (const w of query) {
+      scoreA *= ((countA[w]||0)+1)/(sumA + vocab.length);
+      scoreB *= ((countB[w]||0)+1)/(sumB + vocab.length);
+    }
+    const pred = scoreA >= scoreB ? "A" : "B";
+    steps.push(arr(3 + tokens.length, `Classify "${docs[docs.length-1]}" → class ${pred} (max posterior).`,
+      [19], make(new Set(query), new Set(query)), `Prediction: class ${pred}`,
+      { "score(A)": scoreA.toExponential(2), "score(B)": scoreB.toExponential(2), prediction: pred }));
     return steps;
   }
 };
@@ -652,6 +696,8 @@ def kmeans(points, k, max_iter=100):
   defaultInput: {k:2, points:[[1,2],[1.5,1.8],[5,8],[8,8],[1,0.6],[9,11]]},
   generateSteps({k, points}) {
     const steps: AnimationStep[] = [];
+    // Clamp k to a sane range — can't have more clusters than points
+    k = Math.max(1, Math.min(k, points.length));
     const pts = points.map((p,i)=>({x:p[0],y:p[1],label:`p${i}`,cluster:-1}));
     // random init
     let centroids = points.slice(0,k).map(p=>({x:p[0],y:p[1]}));
@@ -709,13 +755,51 @@ export const dbscanModule: VisualizationModule<{eps:number,minPts:number}> = {
   ],
   defaultInput: {eps:1.5, minPts:2},
   generateSteps({eps, minPts}) {
-    const points = [{x:1,y:1},{x:1.5,y:1.2},{x:5,y:5},{x:5.5,y:5},{x:10,y:10},{x:1.2,y:0.9}];
+    const pts = [{x:1,y:1},{x:1.5,y:1.2},{x:5,y:5},{x:5.5,y:5},{x:10,y:10},{x:1.2,y:0.9}];
+    const n = pts.length;
     const steps: AnimationStep[] = [];
-    steps.push(sc(1,"All points unvisited (eps="+eps+", minPts="+minPts+")",[2],points.map(p=>({...p,cluster:-1})),[],`DBSCAN Init`,{eps,minPts}));
-    steps.push(sc(2,"Point 0: find neighbors within eps",[5],points.map((p,i)=>({...p,cluster:i<2||i===5?0:-1})),[],`Neighbors of p0`,{neighbors:[0,1,5]}));
-    steps.push(sc(3,"Core point: start cluster 1",[9,10],points.map((p,i)=>({...p,cluster:i<2||i===5?1:-1})),[],`Cluster 1 expanding`,{cluster:1}));
-    steps.push(sc(4,"Point 2: new core → cluster 2",[9,10],points.map((p,i)=>({...p,cluster:i<2||i===5?1:i<5?2:-1})),[],`Cluster 2`,{cluster:2}));
-    steps.push(sc(5,"Point 4 (10,10): noise (no neighbors)",[7,8],points.map((p,i)=>({...p,cluster:i===4?3:i<2||i===5?1:2})),[],`Noise point`,{noise:[4]}));
+    // cluster: -1 = unvisited, 0 = noise, >=1 = cluster id
+    const labels = new Array(n).fill(-1);
+    const dist = (a:number,b:number)=>Math.hypot(pts[a].x-pts[b].x, pts[a].y-pts[b].y);
+    const regionQuery = (i:number)=>pts.map((_,j)=>j).filter(j=>dist(i,j)<=eps);
+
+    const render = (label:string, vars:Record<string,unknown>) =>
+      steps.push(sc(
+        steps.length+1, label, [2],
+        pts.map((p,i)=>({...p, cluster: labels[i] < 0 ? -1 : labels[i]})),
+        [], `DBSCAN (eps=${eps}, minPts=${minPts})`, vars));
+
+    render(`Start: all points unvisited. eps=${eps}, minPts=${minPts}.`, {eps, minPts});
+
+    let clusterId = 0;
+    for (let i = 0; i < n; i++) {
+      if (labels[i] !== -1) continue;
+      const neighbors = regionQuery(i);
+      if (neighbors.length < minPts) {
+        labels[i] = 0; // noise (for now)
+        render(`p${i}: ${neighbors.length} neighbor(s) < minPts → mark noise.`, {point:i, neighbors:neighbors.length});
+        continue;
+      }
+      clusterId++;
+      labels[i] = clusterId;
+      const seeds = neighbors.filter(j => j !== i);
+      render(`p${i}: core point (${neighbors.length} neighbors) → start cluster ${clusterId}.`, {point:i, cluster:clusterId});
+      // expand
+      for (let s = 0; s < seeds.length; s++) {
+        const q = seeds[s];
+        if (labels[q] === 0) labels[q] = clusterId;       // noise → border
+        if (labels[q] !== -1) continue;
+        labels[q] = clusterId;
+        const qn = regionQuery(q);
+        if (qn.length >= minPts) {
+          for (const x of qn) if (!seeds.includes(x)) seeds.push(x);
+        }
+      }
+      render(`Cluster ${clusterId} fully expanded.`, {cluster:clusterId, size: labels.filter(l=>l===clusterId).length});
+    }
+
+    const noise = labels.map((l,i)=>l===0?i:-1).filter(i=>i>=0);
+    render(`Done. ${clusterId} cluster(s), ${noise.length} noise point(s).`, {clusters:clusterId, noise});
     return steps;
   }
 };
