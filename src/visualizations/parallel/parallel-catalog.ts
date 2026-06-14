@@ -299,13 +299,28 @@ class Actor:
   ],
   defaultInput: 3,
   generateSteps(actors) {
-    const names=["Alice","Bob","Carol"].slice(0,actors);
+    // Clamp to a sensible, displayable range and generate that many actors.
+    const n = Math.max(2, Math.min(8, Math.floor(actors) || 3));
+    const pool = ["Alice","Bob","Carol","Dave","Eve","Frank","Grace","Heidi"];
+    const names = pool.slice(0, n);
     const steps: AnimationStep[] = [];
-    steps.push(arr(1,`${actors} actors, each with own mailbox`,[9,10,11],names.map(n=>({val:n,state:"active" as string})),"Actors",{actors}));
-    steps.push(arr(2,"Alice sends 'Hello' to Bob",[13,14],[{val:"Alice",state:"active"},{val:"→msg→",state:"default"},{val:"Bob[Hello]",state:"computed"}],"Send",{from:"Alice",to:"Bob"}));
-    steps.push(arr(3,"Bob's mailbox: [Hello] — dequeued and handled",[15,16,17],[{val:"Bob.mailbox",state:"active"},{val:"Hello",state:"highlighted"},{val:"handle(msg)",state:"computed"}],"Handle",{msg:"Hello"}));
-    steps.push(arr(4,"Bob replies to Alice — no shared state!",[13,14],[{val:"Bob",state:"active"},{val:"→reply→",state:"default"},{val:"Alice",state:"computed"}],"Reply",{shared_state:false}));
-    steps.push(arr(5,"All actors process concurrently, no locks needed",[15],[...names.map(n=>({val:n,state:"computed" as string})),...[{val:"✓ safe",state:"highlighted"}]],"Concurrent",{lockFree:true}));
+
+    steps.push(arr(1,`${n} actors, each with its own private mailbox.`,[9,10,11],
+      names.map(nm=>({val:nm,state:"active" as string})),"Actors",{actors:n}));
+
+    // Message ring: each actor sends to the next
+    for (let i = 0; i < n; i++) {
+      const from = names[i], to = names[(i+1)%n];
+      steps.push(arr(2+i,`${from} sends a message to ${to} (async, no shared state).`,[13,14],
+        names.map((nm,j)=>({
+          val: j===(i+1)%n ? `${nm}[msg]` : nm,
+          state: j===i ? "active" : j===(i+1)%n ? "highlighted" : "default" as string,
+        })),"Message passing",{from,to,inFlight:1}));
+    }
+
+    steps.push(arr(2+n,`All ${n} actors process their mailboxes concurrently — no locks needed.`,[15,16,17],
+      [...names.map(nm=>({val:nm,state:"computed" as string})),{val:"✓ lock-free",state:"highlighted"}],
+      "Concurrent processing",{lockFree:true,actors:n}));
     return steps;
   }
 };
@@ -453,11 +468,11 @@ __global__ void divergent(float *a, int n):
 };
 
 // ─── CUDA Memory Hierarchy ────────────────────────────────────────────────────
-export const cudaMemoryModule: VisualizationModule<string> = {
-  id: "cuda-memory", slug: "cuda-memory", title: "CUDA Memory Hierarchy",
+export const cudaMemoryModule: VisualizationModule<number> = {
+  id: "cuda-memory", slug: "cuda-memory", title: "CUDA Memory Coalescing",
   category: ["parallel"], difficulty: "advanced",
-  timeComplexity: "varies by memory tier", spaceComplexity: "O(1)",
-  description: "GPU memory: registers (fastest) → shared → L1 → L2 → global (slowest).",
+  timeComplexity: "varies by access pattern", spaceComplexity: "O(1)",
+  description: "GPU global-memory coalescing: threads accessing a[tid*stride]. Stride 1 = coalesced (fast); larger strides = more memory transactions.",
   relatedTopics: [],
   pythonCode: `# CUDA memory types and usage
 
@@ -487,17 +502,41 @@ __global__ void tiled_matmul(float *A, float *B, float *C):
     { stepNumber: 14, highlightLines: [14] },
     { stepNumber: 18, highlightLines: [18] },
   ],
-  defaultInput: "tiled_matmul",
-  generateSteps(kernel) {
-    const mem=[{val:"Registers",state:"highlighted"},{val:"Shared",state:"active"},{val:"L1/L2",state:"computed"},{val:"Global",state:"default"}];
-    const latency=["~1 cycle","~5 cycles","~20 cycles","~400 cycles"];
-    const size=["4KB/thread","48KB/block","unified","GB"];
+  defaultInput: 1,
+  generateSteps(strideInput) {
+    const stride = Math.max(1, Math.min(8, Math.floor(strideInput) || 1));
+    const THREADS = 8;        // a warp lane sample
+    const WORDS_PER_LINE = 8; // 128-byte cache line / 4-byte word (scaled to 8)
     const steps: AnimationStep[] = [];
-    steps.push(arr(1,"GPU memory hierarchy (fast→slow)",[3,7,14],mem,"Memory tiers",{kernel}));
-    steps.push(arr(2,"Load tile from global→shared memory",[10],[{val:"global A[row,col]",state:"active"},{val:"→ shared tileA",state:"computed"}],"Load tiles",{latency:"~400 cycles global, amortized"}));
-    steps.push(arr(3,"__syncthreads(): all threads done loading",[11],[{val:"__syncthreads()",state:"highlighted"},{val:"barrier",state:"active"}],"Barrier",{threads:"all 256"}));
-    steps.push(arr(4,"Compute matmul using fast shared memory",[12],[...mem.slice(0,2).map(m=>({...m,state:"highlighted" as string})),...mem.slice(2)],"Compute",{speed:"~5 cycles/op"}));
-    steps.push(arr(5,"Coalesced write: threads write consecutive addresses",[18],[{val:"c[tid]←result",state:"highlighted"},{val:"coalesced",state:"active"}],"Coalesced write",{bandwidth:"peak"}));
+
+    // Addresses each thread touches
+    const addrs = Array.from({length: THREADS}, (_, t) => t * stride);
+    // Distinct cache lines (memory transactions) touched
+    const lines = new Set(addrs.map(a => Math.floor(a / WORDS_PER_LINE)));
+    const transactions = lines.size;
+    const efficiency = Math.round((THREADS / (transactions * WORDS_PER_LINE)) * 100);
+
+    steps.push(arr(1,`${THREADS} threads access a[tid×${stride}]. ${stride===1?"Coalesced pattern.":"Strided pattern."}`,[18],
+      addrs.map((a,t)=>({val:`t${t}→a[${a}]`,state:t===0?"active":"default" as string})),
+      `Access pattern (stride=${stride})`,{stride,addresses:addrs}));
+
+    steps.push(arr(2,`Addresses span ${transactions} distinct 128-byte cache line(s).`,[10],
+      Array.from({length: Math.max(...lines)+1},(_,L)=>({
+        val:`line ${L}`, state: lines.has(L) ? "highlighted":"default" as string,
+      })),"Cache lines touched",{transactions}));
+
+    steps.push(arr(3,`Each cache line = 1 memory transaction → ${transactions} transaction(s) issued.`,[14],
+      Array.from({length:transactions},(_,i)=>({val:`txn ${i+1}`,state:"active" as string})),
+      "Memory transactions",{transactions,bytesFetched:transactions*WORDS_PER_LINE*4}));
+
+    steps.push(arr(4,`Bus efficiency ≈ ${efficiency}% (${THREADS} useful words / ${transactions*WORDS_PER_LINE} fetched).`,[18],
+      [{val:`${efficiency}%`,state:efficiency>=90?"highlighted":"active"}],
+      efficiency>=90?"Efficient (coalesced)":"Wasted bandwidth",{efficiency:`${efficiency}%`}));
+
+    steps.push(arr(5, stride===1
+        ? "Stride 1 is optimal: one transaction serves the whole warp."
+        : `Reduce stride toward 1 to coalesce: stride ${stride} wastes ${100-efficiency}% of each fetch.`,[18,19],
+      [{val: stride===1?"OPTIMAL":"SUBOPTIMAL", state:"highlighted"}],"Takeaway",{stride,recommended:1}));
     return steps;
   }
 };

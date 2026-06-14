@@ -514,6 +514,14 @@ export const segmentationModule: VisualizationModule<SegInput> = {
 
     for (const { seg, offset } of addresses) {
       const s = segments[seg];
+      if (!s) {
+        table2dStep(steps,
+          `Invalid segment index ${seg}: only ${segments.length} segments exist (0–${segments.length - 1}).`,
+          matrix, segments.map((_,i) => `Seg ${i}`), ["Name","Base","Limit","Max Addr"], "Segment Table",
+          null, [], { seg, error: "invalid segment" },
+        );
+        continue;
+      }
       if (offset < s.limit) {
         const phys = s.base + offset;
         table2dStep(steps,
@@ -1202,12 +1210,17 @@ export const bankersAlgorithmModule: VisualizationModule<BankersInput> = {
   },
   generateSteps(input) {
     const steps: AnimationStep[] = [];
-    const { processes: n, resources: m, allocation, max, available } = input;
+    const { allocation, max, available } = input;
+    // Derive dimensions from the matrices so a mismatched processes/resources
+    // count in custom input can't read past the array bounds.
+    const n = Math.min(allocation.length, max.length);
+    const m = Math.min(available.length, allocation[0]?.length ?? 0, max[0]?.length ?? 0);
     const procLabels = Array.from({length: n}, (_,i) => `P${i}`);
-    const resLabels = ["A","B","C"].slice(0, m);
+    const resLabels = ["A","B","C","D","E","F"].slice(0, m);
 
     // Compute Need
-    const need = allocation.map((row,i) => row.map((v,j) => max[i][j] - v));
+    const need = Array.from({length: n}, (_,i) =>
+      Array.from({length: m}, (_,j) => (max[i][j] ?? 0) - (allocation[i][j] ?? 0)));
 
     // Show tables
     table2dStep(steps, "Initial state: Allocation, Max matrices and Available resources.", allocation, procLabels, resLabels, "Allocation");

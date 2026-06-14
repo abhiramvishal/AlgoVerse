@@ -380,14 +380,43 @@ def deutsch_jozsa(oracle, n):
     { stepNumber: 9, highlightLines: [9] },
     { stepNumber: 11, highlightLines: [11] },
   ],
-  defaultInput: "balanced",
-  generateSteps(fType) {
+  defaultInput: "0,1,1,0",
+  generateSteps(oracle) {
     const steps: AnimationStep[] = [];
-    steps.push(arr(1,`f is ${fType}; initialize qubits |00...01⟩`,[5,6],[{val:"n qubits |0⟩",state:"active"},{val:"ancilla |1⟩",state:"computed"}],"Init",{n:3}));
-    steps.push(arr(2,"H^(n+1): uniform superposition over all 2ⁿ inputs",[7],Array.from({length:4},(_,i)=>({val:`|${i.toString(2).padStart(2,"0")}⟩:0.5`,state:"computed" as string})),"Superposition",{states:8}));
-    steps.push(arr(3,"Oracle Uf: phase kickback marks f(x) on amplitudes",[8],[{val:"Uf applied",state:"active"},{val:"f(x) encoded",state:"computed"}],"Oracle",{queries:1}));
-    steps.push(arr(4,"H^n: interference cancels/reinforces based on f type",[9],[{val:"H^n",state:"active"},{val:"interference",state:"computed"}],"Hadamard",{}));
-    steps.push(arr(5,`Measure: ${fType==="constant"?"all zeros → CONSTANT":"non-zero → BALANCED"}`,[11,12,13],fType==="constant"?[{val:"|000⟩",state:"highlighted"},{val:"CONSTANT",state:"highlighted"}]:[{val:"|010⟩",state:"highlighted"},{val:"BALANCED",state:"highlighted"}],"Result",{result:fType,queries:1}));
+    // Parse the oracle truth table: f(x) for x = 0..2ⁿ-1, e.g. "0,1,1,0".
+    let f = String(oracle).split(/[,\s]+/).map(t => t.trim()).filter(Boolean).map(t => (t === "1" ? 1 : 0));
+    // Pad/truncate to a power of two
+    const n = Math.max(1, Math.floor(Math.log2(f.length || 1)));
+    const size = 2 ** n;
+    f = f.slice(0, size);
+    while (f.length < size) f.push(0);
+
+    const ones = f.filter(v => v === 1).length;
+    const isConstant = ones === 0 || ones === size;
+    const isBalanced = ones === size / 2;
+    const verdict = isConstant ? "CONSTANT" : isBalanced ? "BALANCED" : "NEITHER (not a valid DJ oracle)";
+
+    steps.push(arr(1,`Oracle truth table f(x) over ${size} inputs (n=${n} qubits).`,[5,6],
+      f.map((v,x)=>({val:`f(${x.toString(2).padStart(n,"0")})=${v}`,state:v===1?"active":"default" as string})),
+      "Oracle f(x)",{n,table:f}));
+
+    steps.push(arr(2,"H^(n+1): uniform superposition over all 2ⁿ inputs.",[7],
+      Array.from({length:size},(_,i)=>({val:`|${i.toString(2).padStart(n,"0")}⟩`,state:"computed" as string})),
+      "Superposition",{amplitude:+(1/Math.sqrt(size)).toFixed(3)}));
+
+    steps.push(arr(3,"Oracle Uf: phase kickback applies (-1)^f(x) to each amplitude.",[8],
+      f.map((v,x)=>({val:`(-1)^${v}|${x.toString(2).padStart(n,"0")}⟩`,state:v===1?"highlighted":"computed" as string})),
+      "Phase kickback",{flipped:ones}));
+
+    steps.push(arr(4,"H^n on the first n qubits: amplitudes interfere.",[9],
+      [{val:"H^n",state:"active"},{val:isConstant?"reinforce |0…0⟩":"cancel |0…0⟩",state:"computed"}],
+      "Interference",{}));
+
+    steps.push(arr(5,`Measure first n qubits → ${isConstant?"all zeros":"non-zero"} ⟹ ${verdict}.`,[11,12,13],
+      isConstant
+        ? [{val:`|${"0".repeat(n)}⟩`,state:"highlighted"},{val:"CONSTANT",state:"highlighted"}]
+        : [{val:isBalanced?`|${"0".repeat(n-1)}1⟩`:"mixed",state:"highlighted"},{val:verdict,state:"highlighted"}],
+      "Measurement",{result:verdict,ones,queries:1}));
     return steps;
   }
 };
@@ -501,7 +530,7 @@ def create_bell_pair():
 };
 
 // ─── Quantum Error Correction ─────────────────────────────────────────────────
-export const quantumErrorModule: VisualizationModule<string> = {
+export const quantumErrorModule: VisualizationModule<number> = {
   id: "quantum-error", slug: "quantum-error", title: "Quantum Error Correction",
   category: ["quantum"], difficulty: "advanced",
   timeComplexity: "O(n²) for Steane [7,1,3]", spaceComplexity: "O(7) qubits per logical qubit",
@@ -533,14 +562,42 @@ def correct(q0, q1, q2, s1, s2):
     { stepNumber: 13, highlightLines: [13] },
     { stepNumber: 16, highlightLines: [16] },
   ],
-  defaultInput: "bit-flip",
-  generateSteps(code) {
+  defaultInput: 1,
+  generateSteps(errorQubitInput) {
     const steps: AnimationStep[] = [];
-    steps.push(arr(1,`Encode |ψ⟩ using 3-qubit ${code} code`,[3,4,5,6,7],[{val:"|ψ⟩",state:"active"},{val:"→|ψψψ⟩",state:"computed"},{val:"CNOT×2",state:"default"}],"Encoding",{physicalQubits:3,logicalQubits:1}));
-    steps.push(arr(2,"Noise: qubit 1 suffers bit-flip error",[9],[{val:"q0=|ψ⟩",state:"computed"},{val:"q1=X|ψ⟩",state:"active"},{val:"q2=|ψ⟩",state:"computed"}],"Error!",{flipped:"q1"}));
-    steps.push(arr(3,"Syndrome measurement: s1=q0⊕q1=1, s2=q1⊕q2=1",[10,11,12],[{val:"s1=1",state:"highlighted"},{val:"s2=1",state:"highlighted"},{val:"→ q1 flipped",state:"computed"}],"Syndrome",{s1:1,s2:1}));
-    steps.push(arr(4,"Correct: X(q1) restores |ψ⟩",[15,16],[{val:"X(q1)",state:"active"},{val:"q1 restored",state:"highlighted"}],"Correction",{qubit:1}));
-    steps.push(arr(5,"Decode: majority vote → logical qubit |ψ⟩ recovered",[17],[{val:"q0=q1=q2=|ψ⟩",state:"computed"},{val:"decoded: |ψ⟩",state:"highlighted"}],"Recovered",{distance:3,canCorrect:1}));
+    // Which physical qubit (0,1,2) suffers a bit-flip. Anything else = no error.
+    const e = [0,1,2].includes(errorQubitInput) ? errorQubitInput : -1;
+
+    // 3-qubit code: encoded as |ψψψ⟩. A flip on qubit e gives that qubit X|ψ⟩.
+    const flipped = [false,false,false];
+    if (e >= 0) flipped[e] = true;
+
+    // Syndrome: s1 = q0⊕q1, s2 = q1⊕q2
+    const s1 = (flipped[0] !== flipped[1]) ? 1 : 0;
+    const s2 = (flipped[1] !== flipped[2]) ? 1 : 0;
+    // Syndrome → which qubit to correct
+    const diagnosed = s1===1 && s2===0 ? 0 : s1===1 && s2===1 ? 1 : s1===0 && s2===1 ? 2 : -1;
+
+    steps.push(arr(1,`Encode |ψ⟩ → |ψψψ⟩ across 3 physical qubits (CNOT×2).`,[3,4,5,6,7],
+      [{val:"q0=|ψ⟩",state:"computed"},{val:"q1=|ψ⟩",state:"computed"},{val:"q2=|ψ⟩",state:"computed"}],
+      "Encoding",{physicalQubits:3,logicalQubits:1}));
+
+    steps.push(arr(2, e<0 ? "No error this round — all qubits intact." : `Noise: qubit ${e} suffers a bit-flip (X) error.`,[9],
+      [0,1,2].map(q=>({val:flipped[q]?`q${q}=X|ψ⟩`:`q${q}=|ψ⟩`,state:flipped[q]?"active":"computed" as string})),
+      e<0?"No error":"Error injected",{flipped: e<0?"none":`q${e}`}));
+
+    steps.push(arr(3,`Syndrome measurement: s1=q0⊕q1=${s1}, s2=q1⊕q2=${s2}.`,[10,11,12],
+      [{val:`s1=${s1}`,state:s1?"highlighted":"default"},{val:`s2=${s2}`,state:s2?"highlighted":"default"},
+       {val: diagnosed<0?"no error detected":`→ q${diagnosed} flipped`,state:"computed"}],
+      "Syndrome",{s1,s2}));
+
+    steps.push(arr(4, diagnosed<0 ? "Syndrome 00 → nothing to correct." : `Correct: apply X(q${diagnosed}) to restore it.`,[15,16],
+      diagnosed<0?[{val:"identity",state:"computed"}]:[{val:`X(q${diagnosed})`,state:"active"},{val:`q${diagnosed} restored`,state:"highlighted"}],
+      "Correction",{corrected: diagnosed<0?"none":`q${diagnosed}`}));
+
+    steps.push(arr(5,`Decode by majority vote → logical |ψ⟩ recovered${e>=0?` despite the error on q${e}`:""}.`,[17],
+      [{val:"q0=q1=q2=|ψ⟩",state:"computed"},{val:"decoded: |ψ⟩",state:"highlighted"}],
+      "Recovered",{distance:3,canCorrect:1,success:diagnosed===e}));
     return steps;
   }
 };

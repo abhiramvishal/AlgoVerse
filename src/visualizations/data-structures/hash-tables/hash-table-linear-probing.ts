@@ -80,7 +80,9 @@ export const hashTableLinearProbingModule: VisualizationModule<{ keys: number[];
 
       let i = h;
       let probeCount = 0;
-      while (table[i] !== null) {
+      // Guard: at most tableSize probes — if the table is full, open
+      // addressing can't place the key (load factor = 1).
+      while (table[i] !== null && probeCount < tableSize) {
         probeCount++;
         snap(
           `Collision at slot ${i} (occupied by ${table[i]}). Probe ${probeCount}: try slot ${(i + 1) % tableSize}.`,
@@ -90,6 +92,14 @@ export const hashTableLinearProbingModule: VisualizationModule<{ keys: number[];
           { key, collisionAt: i, probe: probeCount },
         );
         i = (i + 1) % tableSize;
+      }
+
+      if (table[i] !== null) {
+        snap(`Table is full — cannot insert ${key} (load factor = 1).`, -1, -1, [], {
+          key,
+          status: "table full",
+        });
+        break;
       }
 
       table[i] = key;

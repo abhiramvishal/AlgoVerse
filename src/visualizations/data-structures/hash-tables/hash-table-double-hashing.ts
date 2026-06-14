@@ -74,7 +74,8 @@ export const hashTableDoubleHashingModule: VisualizationModule<{ keys: number[];
 
       let probe = 0;
       let slot = s1;
-      while (table[slot] !== null) {
+      // Guard: stop after tableSize probes (table full / cycle).
+      while (table[slot] !== null && probe < tableSize) {
         probe++;
         const nextSlot = (s1 + probe * s2) % tableSize;
         steps.push({
@@ -93,6 +94,21 @@ export const hashTableDoubleHashingModule: VisualizationModule<{ keys: number[];
           variables: { key, probe, slot: nextSlot },
         });
         slot = nextSlot;
+      }
+
+      if (table[slot] !== null) {
+        steps.push({
+          stepNumber: steps.length + 1,
+          description: `Table is full — cannot insert ${key}.`,
+          highlightLines: [],
+          visualState: {
+            type: "array1d",
+            cells: table.map((v) => ({ val: v === null ? "_" : v, state: v !== null ? "highlighted" : "default" })),
+            label: `Hash Table (size=${tableSize})`,
+          },
+          variables: { key, status: "table full" },
+        });
+        break;
       }
 
       table[slot] = key;

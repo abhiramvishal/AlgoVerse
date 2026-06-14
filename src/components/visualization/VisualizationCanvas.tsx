@@ -1702,13 +1702,47 @@ function ScatterRenderer({ visualState }: { visualState: VisualState }) {
         <line x1={sx(decisionBoundary.x1)} y1={sy(decisionBoundary.y1)} x2={sx(decisionBoundary.x2)} y2={sy(decisionBoundary.y2)} stroke="#818cf8" strokeWidth={1.5} strokeDasharray="6,3" />
       )}
 
+      {/* Connector lines from the query point (label "?") to each selected
+          neighbor (label "★") — makes the KNN relationship obvious. */}
+      {(() => {
+        const query = points.find((p) => p.label === "?");
+        if (!query) return null;
+        const neighbors = points.filter((p) => p.label === "★");
+        return neighbors.map((n, i) => (
+          <line
+            key={`knn-link-${i}`}
+            x1={sx(query.x)} y1={sy(query.y)}
+            x2={sx(n.x)}    y2={sy(n.y)}
+            stroke="#fbbf24" strokeWidth={1.2} strokeDasharray="4,3" strokeOpacity={0.6}
+          />
+        ));
+      })()}
+
       {/* Points */}
       {points.map((p, i) => {
         const color = p.cluster !== undefined ? (clusterColors[p.cluster % clusterColors.length] ?? "#6366f1") : "#6366f1";
+        const isQuery = p.label === "?";
+        const isNeighbor = p.label === "★";
+
+        // Query point: large amber ringed marker — clearly "the point being classified"
+        if (isQuery) {
+          return (
+            <g key={i}>
+              <circle cx={sx(p.x)} cy={sy(p.y)} r={11} fill="none" stroke="#fbbf24" strokeWidth={2} strokeOpacity={0.5} />
+              <circle cx={sx(p.x)} cy={sy(p.y)} r={6} fill="#f59e0b" stroke="#fff" strokeWidth={1.5} />
+              <text x={sx(p.x)} y={sy(p.y) - 15} textAnchor="middle" fontSize={10} fill="#fbbf24" fontFamily="monospace" fontWeight="700">query</text>
+            </g>
+          );
+        }
+
+        // Selected neighbor: highlight ring around the dot
         return (
           <g key={i}>
-            <circle cx={sx(p.x)} cy={sy(p.y)} r={5} fill={color} fillOpacity={0.75} stroke={color} strokeWidth={1} />
-            {p.label !== undefined && (
+            {isNeighbor && (
+              <circle cx={sx(p.x)} cy={sy(p.y)} r={9} fill="none" stroke="#34d399" strokeWidth={2} />
+            )}
+            <circle cx={sx(p.x)} cy={sy(p.y)} r={isNeighbor ? 5.5 : 5} fill={color} fillOpacity={0.8} stroke={color} strokeWidth={1} />
+            {p.label !== undefined && !isNeighbor && (
               <text x={sx(p.x) + 7} y={sy(p.y) + 4} fontSize={8} fill="#9ca3af" fontFamily="monospace">{p.label}</text>
             )}
           </g>
