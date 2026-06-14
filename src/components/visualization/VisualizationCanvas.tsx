@@ -528,7 +528,13 @@ function LinkedListRenderer({ visualState }: { visualState: VisualState }) {
 /* ─── Stack / Queue Renderer ─────────────────────────────────────────────── */
 function StackQueueRenderer({ visualState }: { visualState: VisualState }) {
   const mode = (visualState.mode as string) ?? "stack";
-  const cells = (visualState.cells as (string | number)[]) ?? [];
+  // Cells may be plain values or { val, state } objects
+  const rawCells = Array.isArray(visualState.cells) ? (visualState.cells as unknown[]) : [];
+  const cells = rawCells.map((c) =>
+    typeof c === "object" && c !== null && "val" in c
+      ? (c as { val: string | number; state?: string })
+      : { val: c as string | number, state: undefined },
+  );
   const activeIndex = visualState.activeIndex as number | undefined;
   const topIndex = visualState.topIndex as number | undefined;
 
@@ -551,9 +557,9 @@ function StackQueueRenderer({ visualState }: { visualState: VisualState }) {
         </text>
         {/* Base line */}
         <line x1={startX - 10} y1={startY + 4} x2={startX + cellW + 10} y2={startY + 4} stroke="#4c4880" strokeWidth={2} />
-        {display.map((val, i) => {
+        {display.map((cell, i) => {
           const originalIndex = cells.length - 1 - i;
-          const isActive = originalIndex === activeIndex;
+          const isActive = originalIndex === activeIndex || cell.state === "active";
           const isTop = originalIndex === (topIndex ?? cells.length - 1);
           const y = startY - (i + 1) * (cellH + 2);
 
@@ -578,7 +584,7 @@ function StackQueueRenderer({ visualState }: { visualState: VisualState }) {
                 fontFamily="monospace"
                 fontWeight="bold"
               >
-                {val}
+                {cell.val}
               </text>
               {isTop && (
                 <text
@@ -615,8 +621,8 @@ function StackQueueRenderer({ visualState }: { visualState: VisualState }) {
       <text x={300} y={24} textAnchor="middle" fontSize={11} fill="#818cf8" fontFamily="monospace" fontWeight="700">
         QUEUE
       </text>
-      {cells.map((val, i) => {
-        const isActive = i === activeIndex;
+      {cells.map((cell, i) => {
+        const isActive = i === activeIndex || cell.state === "active";
         const x = startX + i * (cellW + 4);
         return (
           <g key={i}>
@@ -639,7 +645,7 @@ function StackQueueRenderer({ visualState }: { visualState: VisualState }) {
               fontFamily="monospace"
               fontWeight="bold"
             >
-              {val}
+              {cell.val}
             </text>
             {i === 0 && (
               <text x={x + cellW / 2} y={y + cellH + 18} textAnchor="middle" fontSize={9} fill="#f59e0b" fontFamily="monospace" fontWeight="600">
@@ -931,7 +937,12 @@ function FlowDiagramRenderer({ visualState }: { visualState: VisualState }) {
 function SearchRenderer({ visualState }: { visualState: VisualState }) {
   const array = (visualState.array as number[] | undefined) ?? [];
   const target = visualState.target as number | undefined;
-  const active = (visualState.active as number[] | undefined) ?? [];
+  // active may be an index list, or a single index number (-1 = none)
+  const active = Array.isArray(visualState.active)
+    ? (visualState.active as number[])
+    : typeof visualState.active === "number" && visualState.active >= 0
+      ? [visualState.active]
+      : [];
   const searchLeft = typeof visualState.searchLeft === "number" ? visualState.searchLeft : null;
   const searchRight = typeof visualState.searchRight === "number" ? visualState.searchRight : null;
   const found = typeof visualState.found === "number" ? visualState.found : -1;
@@ -997,7 +1008,15 @@ function Array1DRenderer({ visualState }: { visualState: VisualState }) {
   const label = visualState.label as string | undefined;
   const pointers = (visualState.pointer as { index: number; label: string }[] | undefined) ?? [];
 
-  const cellW = Math.min(60, Math.max(32, Math.floor(520 / Math.max(cells.length, 1))));
+  // Auto-size cells to the longest value so wide content (hashes, "256 bits")
+  // isn't cramped. Cap so a handful of short cells don't balloon.
+  const longest = cells.reduce((m, c) => Math.max(m, String(c.val).length), 1);
+  const perChar = 9;               // ~px per monospace char at text-xs
+  const minW = 38;
+  const maxW = 120;
+  const cellW = Math.min(maxW, Math.max(minW, longest * perChar + 16));
+  // Tighten gap a little when there are many cells, widen when few
+  const gapPx = cells.length > 12 ? 6 : cells.length > 6 ? 10 : 14;
 
   function cellColor(state: string) {
     switch (state) {
@@ -1010,25 +1029,25 @@ function Array1DRenderer({ visualState }: { visualState: VisualState }) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 w-full">
-      {label && <div className="text-xs font-mono text-zinc-400 font-semibold">{label}</div>}
-      <div className="flex gap-1 flex-wrap justify-center">
+    <div className="flex flex-col items-center gap-4 w-full h-full justify-center px-4 overflow-auto">
+      {label && <div className="text-sm font-mono text-zinc-300 font-semibold">{label}</div>}
+      <div className="flex flex-wrap justify-center items-end" style={{ gap: `${gapPx}px` }}>
         {cells.map((cell, i) => {
           const { bg, border } = cellColor(cell.state);
           const ptr = pointers.find((p) => p.index === i);
           return (
-            <div key={i} className="flex flex-col items-center gap-1">
+            <div key={i} className="flex flex-col items-center gap-1.5">
               {ptr && (
-                <div className="text-[9px] font-mono text-amber-400">{ptr.label}</div>
+                <div className="text-[10px] font-mono text-amber-400 font-semibold">{ptr.label}</div>
               )}
-              {ptr && <div className="w-px h-2 bg-amber-400" />}
+              {ptr && <div className="w-px h-2.5 bg-amber-400" />}
               <motion.div
                 layout
                 transition={{ type: "spring", damping: 20, stiffness: 250 }}
-                className="flex items-center justify-center rounded font-mono font-bold text-white text-xs"
+                className="flex items-center justify-center rounded-lg font-mono font-bold text-white text-xs px-2 shadow-md"
                 style={{
                   width: cellW,
-                  height: 40,
+                  height: 46,
                   background: bg,
                   border: `1.5px solid ${border}`,
                 }}
@@ -1423,13 +1442,23 @@ function MatrixRenderer({ visualState }: { visualState: VisualState }) {
 }
 
 /* ─── Bit Renderer ───────────────────────────────────────────────────────── */
+/* Accept bits as either a string ("1010") or a number[] ([1,0,1,0]) */
+function normalizeBits(b: unknown): string {
+  if (typeof b === "string") return b;
+  if (Array.isArray(b)) return b.join("");
+  if (typeof b === "number") return b.toString(2).padStart(8, "0");
+  return "00000000";
+}
+
 function BitRenderer({ visualState }: { visualState: VisualState }) {
   const number = typeof visualState.number === "number" ? visualState.number : 0;
-  const bits = (visualState.bits as string) ?? "00000000";
+  const bits = normalizeBits(visualState.bits);
   const activeBits = new Set<number>((visualState.activeBits as number[] | undefined) ?? []);
   const label = visualState.label as string | undefined;
-  const result = visualState.result as { bits: string; number: number } | undefined;
-  const operandB = visualState.operandB as { bits: string; number: number } | undefined;
+  const rawResult = visualState.result as { bits: unknown; number: number } | undefined;
+  const rawOperandB = visualState.operandB as { bits: unknown; number: number } | undefined;
+  const result = rawResult ? { bits: normalizeBits(rawResult.bits), number: rawResult.number } : undefined;
+  const operandB = rawOperandB ? { bits: normalizeBits(rawOperandB.bits), number: rawOperandB.number } : undefined;
 
   const cellSize = 28;
   const gap = 2;
@@ -1937,8 +1966,9 @@ function PipelineRenderer({ visualState }: { visualState: VisualState }) {
   const stages = (visualState.stages as string[]) ?? ["IF", "ID", "EX", "MEM", "WB"];
   const instructions = (visualState.instructions as PipelineInstruction[]) ?? [];
   const currentCycle = typeof visualState.currentCycle === "number" ? visualState.currentCycle : 0;
-  const stalls = (visualState.stalls as PipelineStall[] | undefined) ?? [];
-  const hazards = (visualState.hazards as string[] | undefined) ?? [];
+  // Some modules pass stalls as a count (number) rather than a list
+  const stalls = Array.isArray(visualState.stalls) ? (visualState.stalls as PipelineStall[]) : [];
+  const hazards = Array.isArray(visualState.hazards) ? (visualState.hazards as string[]) : [];
 
   const stallSet = new Set(stalls.map((s) => `${s.instruction},${s.stage},${s.cycle}`));
 

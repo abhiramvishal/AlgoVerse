@@ -416,17 +416,6 @@ export const visualizationRegistry = new Map(
   visualizationModules.map((m) => [m.slug, m]),
 );
 
-/* ── Slug aliases: taxonomy ID → registered module slug ─────────────────────
-   Use when a module covers multiple taxonomy entries or was renamed.          */
-const SLUG_ALIASES: Record<string, string> = {
-  // stack-queue module covers both taxonomy IDs
-  "stack":  "stack-queue",
-  "queue":  "stack-queue",
-};
-
 export function getVisualizationBySlug(slug: string) {
-  return (
-    visualizationRegistry.get(slug) ??
-    visualizationRegistry.get(SLUG_ALIASES[slug] ?? "")
-  );
+  return visualizationRegistry.get(slug);
 }

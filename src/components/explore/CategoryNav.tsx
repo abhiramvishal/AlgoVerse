@@ -9,17 +9,8 @@ import { taxonomy } from "@/data/taxonomy";
 import { visualizationModules } from "@/lib/visualization-registry";
 import type { VisualizationTaxonomyNode } from "@/types/visualization";
 
-/* ── module slug → module, plus taxonomy-ID aliases ── */
+/* ── module slug → module ── */
 const moduleMap = new Map(visualizationModules.map((m) => [m.slug, m]));
-// Alias entries so taxonomy IDs that differ from the module slug still resolve
-const TAXONOMY_ALIASES: Record<string, string> = {
-  "stack":  "stack-queue",
-  "queue":  "stack-queue",
-};
-for (const [taxId, slug] of Object.entries(TAXONOMY_ALIASES)) {
-  const mod = moduleMap.get(slug);
-  if (mod) moduleMap.set(taxId, mod);
-}
 
 /* ── color class per top-level category id ── */
 const CAT_COLOR: Record<string, string> = {
