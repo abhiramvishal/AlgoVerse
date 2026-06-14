@@ -496,7 +496,7 @@ export default function Home() {
         <p className="text-zinc-600">
           Built by{" "}
           <a
-            href="https://www.linkedin.com/in/gopi-abhiram-vishal-chongala-9a9098177/"
+            href="https://www.linkedin.com/in/abhiram-chongala-9a9098177/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-zinc-400 hover:text-indigo-400 transition-colors"
